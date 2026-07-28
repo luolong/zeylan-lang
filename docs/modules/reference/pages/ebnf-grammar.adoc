@@ -1,0 +1,22 @@
+= EBNF Syntactic Grammar Specification
+:navtitle: EBNF Grammar
+
+Formal Extended Backus-Naur Form (EBNF) grammar specification for Zeylan.
+
+== Lexical Grammar
+
+[source,ebnf]
+----
+Identifier  ::= [a-zA-Z_] [a-zA-Z0-9_]*
+TypeName    ::= [A-Z] [a-zA-Z0-9_]*
+ValueName   ::= [a-z] [a-zA-Z0-9_]*
+----
+
+== Type Expressions
+
+[source,ebnf]
+----
+TypeExpr    ::= PrimaryType ('|' PrimaryType)* ('&' PrimaryType)*
+PrimaryType ::= TypeName | NullableType | '(' TypeExpr ')'
+NullableType ::= TypeName '?'
+----

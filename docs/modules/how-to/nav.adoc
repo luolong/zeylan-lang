@@ -1,0 +1,3 @@
+.How-To Guides
+* xref:mock-database-in-tests.adoc[Mock Databases in Unit Tests]
+* xref:sandbox-untrusted-plugins.adoc[Sandbox Untrusted Plugins]

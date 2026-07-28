@@ -1,0 +1,6 @@
+[tools]
+bazel = "9.2"
+bazelisk = "1.29"
+java = "graalvm-community-25.0"
+node = "22"
+

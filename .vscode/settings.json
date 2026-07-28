@@ -1,0 +1,12 @@
+{
+    "git.enabled": false,
+    "mise.autoDetectMiseBinPath": true,
+    "mise.checkForNewMiseVersion": true,
+    "mise.configureExtensionsAutomatically": true,
+    "debug.javascript.defaultRuntimeExecutable": {
+        "pwa-node": "/Users/rolandtepp/.local/share/mise/shims/node"
+    },
+    "bazel.executable": "/Users/rolandtepp/.local/share/mise/installs/bazelisk/1.29/bazelisk",
+    "java.jdt.ls.java.home": "/Users/rolandtepp/.local/share/mise/installs/java/graalvm-community-25.0.2",
+    "java.import.gradle.java.home": "/Users/rolandtepp/.local/share/mise/installs/java/graalvm-community-25.0.2"
+}

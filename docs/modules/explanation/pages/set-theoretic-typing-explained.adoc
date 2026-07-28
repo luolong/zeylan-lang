@@ -1,0 +1,4 @@
+= Set-Theoretic Typing Explained
+:navtitle: Set-Theoretic Typing
+
+Understanding how unions (`|`), intersections (`&`), and relative complements (`\`) unify data types and effect signatures under mathematical set theory.

@@ -1,0 +1,9 @@
+{
+  "name": "zeylan-docs",
+  "version": "1.0.0",
+  "private": true,
+  "devDependencies": {
+    "@antora/cli": "^3.1.9",
+    "@antora/site-generator": "^3.1.9"
+  }
+}

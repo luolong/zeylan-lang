@@ -1,0 +1,12 @@
+= Zeylan Programming Language
+:navtitle: Overview
+
+Welcome to the documentation for **Zeylan**—a modern programming language built on set-theoretic types (`A | B`, `A & B`, `E \ H`), algebraic effect inference, explicit purity, first-class handlers, and zero-trust capability security.
+
+== Documentation Architecture (Diátaxis)
+
+* xref:tutorials:getting-started.adoc[Tutorials] -- Take your first steps with Zeylan through guided learning.
+* xref:how-to:mock-database-in-tests.adoc[How-To Guides] -- Practical recipes for real-world software tasks.
+* xref:reference:ebnf-grammar.adoc[Reference & Specification] -- Technical specs, EBNF grammar, and type system rules.
+* xref:explanation:the-zeylan-language-environment.adoc[Explanations] -- Read the design White Paper, roadmaps, and deep dives into typing and algebraic effects.
+* xref:contributing:dev-environment.adoc[Compiler Developer Guide] -- Instructions and internals for language contributors.

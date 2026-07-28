@@ -1,0 +1,14 @@
+= How to Sandbox Untrusted Plugins
+:navtitle: Sandboxing Plugins
+
+Learn how to use set intersection on effect signatures (`performs E & Mask`) to limit callback capabilities.
+
+[source,zeylan]
+----
+shared T sandbox<T, E, Mask>(T() untrustedCallback)
+    performs (E & Mask)
+    given E satisfies Effect
+    given Mask satisfies Effect {
+    return untrustedCallback();
+}
+----

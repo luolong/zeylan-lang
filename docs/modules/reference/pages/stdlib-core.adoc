@@ -1,0 +1,10 @@
+= Standard Library (`std.core`)
+:navtitle: std.core
+
+API reference for core capability interfaces and utility types.
+
+== Primitive Effects
+
+* `Logger`: Interface for diagnostic logging.
+* `State<T>`: Explicit mutable cell capability.
+* `Reader<R>`: Environment context capability.

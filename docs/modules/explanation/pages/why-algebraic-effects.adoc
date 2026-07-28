@@ -1,0 +1,4 @@
+= Why Algebraic Effects over Async/Await?
+:navtitle: Why Algebraic Effects?
+
+An architectural deep dive into why Zeylan uses row-polymorphic algebraic effects to eliminate the "colored function" problem and simplify dependency injection.

@@ -1,0 +1,4 @@
+.Reference & Specifications
+* xref:ebnf-grammar.adoc[EBNF Syntactic Grammar]
+* xref:type-system.adoc[Set-Theoretic Type System]
+* xref:stdlib-core.adoc[Standard Library (`std.core`)]

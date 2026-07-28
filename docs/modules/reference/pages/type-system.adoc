@@ -1,0 +1,10 @@
+= Set-Theoretic Type System & Subtyping Rules
+:navtitle: Type System Spec
+
+Specification of subtyping, union/intersection algebra, and relative complement effect subtraction.
+
+== Subtyping Rules
+
+1. Union: `A <: (A | B)` and `B <: (A | B)`
+2. Intersection: `(A & B) <: A` and `(A & B) <: B`
+3. Relative Complement: `(E \ H) = E & ~H`

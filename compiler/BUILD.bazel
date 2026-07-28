@@ -1,0 +1,25 @@
+load("@rules_java//java:defs.bzl", "java_binary", "java_library")
+load("@rules_graalvm//graalvm:defs.bzl", "native_image")
+
+# Compile the compiler library
+java_library(
+    name = "compiler_lib",
+    srcs = glob(["src/main/java/**/*.java"]),
+    visibility = ["//visibility:private"],
+)
+
+# Standard JVM-based executable
+java_binary(
+    name = "compiler_jvm",
+    main_class = "org.zeylan.compiler.Main",
+    runtime_deps = [":compiler_lib"],
+    visibility = ["//visibility:public"],
+)
+
+# Compiled standalone Native Image executable
+native_image(
+    name = "zeylan",
+    main_class = "org.zeylan.compiler.Main",
+    deps = [":compiler_lib"],
+    visibility = ["//visibility:public"],
+)

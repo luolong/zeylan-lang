@@ -1,0 +1,23 @@
+"Bazel dependencies, see https://registry.bazel.build"
+
+bazel_dep(name = "rules_graalvm", version = "0.11.1")
+bazel_dep(name = "rules_java", version = "9.7.0")
+
+# Setup GraalVM Toolchain (Java 25 Community Edition)
+gvm = use_extension("@rules_graalvm//:extensions.bzl", "graalvm")
+gvm.graalvm(
+    name = "graalvm",
+    version = "25.0.0",
+    distribution = "community",
+    java_version = "25",
+)
+use_repo(gvm, "graalvm")
+
+# Register JVM and SDK toolchains
+register_toolchains("@graalvm//:jvm", "@graalvm//:sdk")
+
+git_override(
+    module_name = "rules_graalvm",
+    remote = "https://github.com/sgammon/rules_graalvm.git",
+    branch = "main",
+)

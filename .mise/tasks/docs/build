@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+#MISE description="Build Antora documentation"
+#MISE depends=["docs:install"]
+
+npx antora --fetch antora-playbook.yml

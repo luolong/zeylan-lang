@@ -1,0 +1,32 @@
+= Compiler Developer Setup
+:navtitle: Dev Environment
+
+How to set up Java 25, GraalVM, and Bazel for contributing to the Zeylan compiler.
+
+== Requirements
+* Java 25 / GraalVM JDK 25+
+* Bazel build tool
+
+== Building Documentation
+
+We use link:https://mise.jdx.dev/[mise] to manage tool dependencies (Java, Node.js, Bazel, etc.) and run tasks.
+
+=== Setup
+To download Node.js and install local documentation dependencies:
+
+[source,shell]
+----
+mise run docs:install
+----
+
+=== Build the Documentation
+To generate the documentation site:
+
+[source,shell]
+----
+mise run docs:build
+----
+
+The output will be built in the `./build/site` directory.
+
+NOTE: Antora requires the local project directory to be a Git repository. Since this project is set up with Jujutsu using a colocated Git backend, the Git repository requirement is satisfied automatically.

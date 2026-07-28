@@ -1,0 +1,25 @@
+= Getting Started with Zeylan
+:navtitle: Getting Started
+
+This tutorial guides you step-by-step through installing Zeylan, writing your first `pure` functions, and compiling a program.
+
+== Prerequisites
+* JDK 26 or GraalVM 26+ installed.
+
+== Writing Hello World
+
+[source,zeylan]
+----
+shared void main() {
+    print("Hello, Zeylan!");
+}
+----
+
+== Pure Calculations
+
+Functions in Zeylan are pure calculations unless marked with capabilities:
+
+[source,zeylan]
+----
+shared pure Float calculateTax(Float amount, Float rate) => amount * rate;
+----

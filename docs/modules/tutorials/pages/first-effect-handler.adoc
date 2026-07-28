@@ -1,0 +1,34 @@
+= Your First Effect Handler
+:navtitle: First Effect Handler
+
+Learn how to write algebraic effect interfaces and handle them linearly using `guard handle ... with ... else`.
+
+== Defining an Effect Interface
+
+[source,zeylan]
+----
+shared interface Logger {
+    shared formal void log(String message);
+}
+----
+
+== Handling an Effect
+
+[source,zeylan]
+----
+shared void processUser(String id) performs Logger {
+    Logger.log("Processing user: " + id);
+}
+
+shared void run() {
+    val quietLogger = object satisfies Logger {
+        shared actual void log(String message) { /* silent */ }
+    };
+
+    handle {
+        processUser("usr_123");
+    } with {
+        Logger => quietLogger;
+    };
+}
+----

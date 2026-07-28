@@ -1,0 +1,11 @@
+name: zeylan
+title: Zeylan Programming Language
+version: '1.0-draft'
+start_page: ROOT:index.adoc
+nav:
+  - modules/ROOT/nav.adoc
+  - modules/tutorials/nav.adoc
+  - modules/how-to/nav.adoc
+  - modules/reference/nav.adoc
+  - modules/explanation/nav.adoc
+  - modules/contributing/nav.adoc
