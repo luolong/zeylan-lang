@@ -8,5 +8,6 @@
     },
     "bazel.executable": "/Users/rolandtepp/.local/share/mise/installs/bazelisk/1.29/bazelisk",
     "java.jdt.ls.java.home": "/Users/rolandtepp/.local/share/mise/installs/java/graalvm-community-25.0.2",
+    "java.compile.nullAnalysis.mode": "automatic",
     "java.import.gradle.java.home": "/Users/rolandtepp/.local/share/mise/installs/java/graalvm-community-25.0.2"
 }

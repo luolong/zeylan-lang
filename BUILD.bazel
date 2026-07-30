@@ -1,0 +1,5 @@
+exports_files([
+    "antora-playbook.yml",
+    "package.json",
+    "package-lock.json",
+])

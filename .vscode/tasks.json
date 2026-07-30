@@ -1,0 +1,29 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Run Zeylan REPL (Native)",
+      "type": "shell",
+      "command": "mise run zeylan",
+      "problemMatcher": [],
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      },
+      "presentation": {
+        "focus": true,
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "Run Zeylan REPL (JVM)",
+      "type": "shell",
+      "command": "mise run zeylan-jvm",
+      "problemMatcher": [],
+      "presentation": {
+        "focus": true,
+        "panel": "shared"
+      }
+    }
+  ]
+}

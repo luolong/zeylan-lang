@@ -8,20 +8,67 @@ How to set up Java 25, GraalVM, and Bazel for contributing to the Zeylan compile
 * Java 25 / GraalVM JDK 25+
 * Bazel build tool
 
-== Building Documentation
+== Building and Running the Compiler
 
-We use link:https://mise.jdx.dev/[mise] to manage tool dependencies (Java, Node.js, Bazel, etc.) and run tasks.
+We use `mise` to manage development tools and versions (like Bazel and Java). To build and run the compiler, use the following commands:
 
-=== Setup
+=== Build the Native Compiler
 
-To download Node.js and install local documentation dependencies:
+To build the standalone native compiler binary `zeylan`:
 
 [source,shell]
 ----
-mise run docs:install
+mise exec -- bazel build //compiler:zeylan
 ----
 
-=== Build the Documentation
+=== Run the Compiler (Native)
+
+To run the native compiler and see its CLI options:
+
+[source,shell]
+----
+mise run zeylan --help
+----
+
+To run the native compiler REPL session:
+
+[source,shell]
+----
+mise run zeylan
+----
+
+=== Run the Compiler (JVM-based)
+
+To avoid GraalVM compilation time (20s+) during development, you can run the JVM-based compiler, which starts up instantly:
+
+To see CLI options:
+
+[source,shell]
+----
+mise run zeylan-jvm --help
+----
+
+To launch the JVM REPL session:
+
+[source,shell]
+----
+mise run zeylan-jvm
+----
+
+NOTE: Direct `bazel run` executions of interactive CLI commands (like the REPL) can fail or lose TTY support due to Bazel's run sandbox environment. Always use `mise run` commands to compile with Bazel and run directly on the host.
+
+=== Custom Bazel Targets
+
+All general Bazel commands should be prefixed with `mise exec --` (or `mise x --`) to ensure the correct versions of Bazel and Java are loaded:
+
+[source,shell]
+----
+mise exec -- bazel <command> <targets>
+----
+
+== Building Documentation
+
+We use link:https://mise.jdx.dev/[mise] to manage tool dependencies (Java, Node.js, Bazel, etc.) and run tasks.
 
 To generate the documentation site:
 

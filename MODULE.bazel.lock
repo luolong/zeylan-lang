@@ -198,8 +198,8 @@
   "moduleExtensions": {
     "@@rules_graalvm+//:extensions.bzl%graalvm": {
       "general": {
-        "bzlTransitiveDigest": "raY4xhIjY4Q7hSKDDs7kF8QQX6n8peIKflvz76PSqEQ=",
-        "usagesDigest": "eF8h6wJimt+IBlmV0T5jVkQp0A774l/3fkdRUBfp1y4=",
+        "bzlTransitiveDigest": "YEZMyvwrR60IthBhvLQfoUh7JqMArJV9zcmDhWZ/HaQ=",
+        "usagesDigest": "jlJhsSYU6gRz+ZRwBeHkc4PCg2u+X1q+xxiHYusERsM=",
         "recordedInputs": [
           "REPO_MAPPING:rules_graalvm+,bazel_skylib bazel_skylib+"
         ],

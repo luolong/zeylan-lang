@@ -113,27 +113,48 @@ To build the compiler targets (both JVM jar and GraalVM native image executable)
 mise run build
 ----
 
-To run the compiled native compiler executable:
+To run the native compiler with arguments (e.g., to see the help menu):
 
 [source,shell]
 ----
-mise run run
+mise run zeylan --help
+----
+
+To launch the REPL session:
+
+[source,shell]
+----
+mise run zeylan
+----
+
+For much faster compiler execution during development (bypassing GraalVM Native Image compilation), you can run the JVM-based build:
+
+[source,shell]
+----
+mise run zeylan-jvm
+----
+
+Or with custom compiler arguments:
+
+[source,shell]
+----
+mise run zeylan-jvm run file.ze
+----
+
+=== Running Custom Bazel Commands
+
+Since tool versions (including Bazel and GraalVM Java) are managed via `mise`, you should prefix all `bazel` commands with `mise exec --` (or `mise x --`) to ensure the correct environment and tools are loaded:
+
+[source,shell]
+----
+mise exec -- bazel build //compiler:zeylan
 ----
 
 === Building the Documentation Site
 
-The documentation is structured using Antora.
+The documentation is structured using Antora and built under Bazel.
 To build it locally:
 
-1. **Install Node.js and dependencies**:
-+
-[source,shell]
-----
-mise run docs:install
-----
-
-2. **Build the static documentation site**:
-+
 [source,shell]
 ----
 mise run docs:build

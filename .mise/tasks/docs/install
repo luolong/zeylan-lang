@@ -1,4 +1,0 @@
-#!/usr/bin/env bash
-#MISE description="Install Antora and dependencies locally"
-
-npm install

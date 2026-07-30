@@ -1,25 +1,66 @@
-load("@rules_java//java:defs.bzl", "java_binary", "java_library")
 load("@rules_graalvm//graalvm:defs.bzl", "native_image")
+load("@rules_java//java:defs.bzl", "java_binary", "java_library", "java_plugin")
+
+java_plugin(
+    name = "picocli_processor",
+    processor_class = "picocli.codegen.aot.graalvm.processor.NativeImageConfigGeneratorProcessor",
+    deps = [
+        "@maven//:info_picocli_picocli_codegen",
+    ],
+)
+
+java_plugin(
+    name = "nullaway",
+    deps = [
+        "@maven//:com_uber_nullaway_nullaway",
+    ],
+)
 
 # Compile the compiler library
 java_library(
     name = "compiler_lib",
     srcs = glob(["src/main/java/**/*.java"]),
+    javacopts = [
+        "-Xep:NullAway:ERROR",
+        "-XepOpt:NullAway:AnnotatedPackages=org.zeylan",
+        "-XepOpt:NullAway:JSpecifyMode=true",
+        "-Aproject=zeylan",
+    ],
+    plugins = [
+        ":nullaway",
+        ":picocli_processor",
+    ],
     visibility = ["//visibility:private"],
+    deps = [
+        "@maven//:org_jline_jansi",
+        "@maven//:org_jline_jline_terminal",
+        "@maven//:org_jline_jline_terminal_jni",
+        "@maven//:org_jline_jline_reader",
+        "@maven//:org_jspecify_jspecify",
+        "@maven//:info_picocli_picocli",
+    ],
 )
 
 # Standard JVM-based executable
 java_binary(
     name = "compiler_jvm",
     main_class = "org.zeylan.compiler.Main",
-    runtime_deps = [":compiler_lib"],
+    jvm_flags = ["--enable-native-access=ALL-UNNAMED"],
     visibility = ["//visibility:public"],
+    runtime_deps = [":compiler_lib"],
 )
 
 # Compiled standalone Native Image executable
 native_image(
     name = "zeylan",
     main_class = "org.zeylan.compiler.Main",
-    deps = [":compiler_lib"],
     visibility = ["//visibility:public"],
+    deps = [
+        ":compiler_lib",
+    ],
+    extra_args = [
+        "--enable-native-access=ALL-UNNAMED",
+    ],
+    executable_name = "%target%",
 )
+

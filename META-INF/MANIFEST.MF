@@ -1,0 +1,19 @@
+Manifest-Version: 1.0
+Bnd-LastModified: 1745022753052
+Bundle-ManifestVersion: 2
+Bundle-Name: picocli
+Bundle-SymbolicName: picocli
+Bundle-Version: 4.7.7
+Created-By: 1.8.0_202 (Oracle Corporation)
+Export-Package: picocli;version="4.7.7"
+Implementation-Title: picocli
+Implementation-Vendor: Remko Popma
+Implementation-Version: 4.7.7
+Main-Class: picocli.AutoComplete
+Multi-Release: true
+Require-Capability: osgi.ee;filter:="(&(osgi.ee=JavaSE)(version=1.5))"
+Specification-Title: picocli
+Specification-Vendor: Remko Popma
+Specification-Version: 4.7.7
+Tool: Bnd-6.4.0.202211291949
+

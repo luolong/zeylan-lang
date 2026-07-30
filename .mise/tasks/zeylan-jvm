@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+#MISE description="Build and run the JVM-based compiler"
+
+bazel build //compiler:compiler_jvm
+
+if [ $# -eq 0 ]; then
+  exec bazel-bin/compiler/compiler_jvm repl
+else
+  exec bazel-bin/compiler/compiler_jvm "$@"
+fi

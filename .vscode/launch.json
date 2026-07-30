@@ -1,0 +1,29 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Zeylan REPL (Native)",
+      "runtimeExecutable": "mise",
+      "runtimeArgs": [
+        "run",
+        "zeylan"
+      ],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Zeylan REPL (JVM)",
+      "runtimeExecutable": "mise",
+      "runtimeArgs": [
+        "run",
+        "zeylan-jvm"
+      ],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen"
+    }
+  ]
+}

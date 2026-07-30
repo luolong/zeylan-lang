@@ -2,14 +2,15 @@
 
 bazel_dep(name = "rules_graalvm", version = "0.11.1")
 bazel_dep(name = "rules_java", version = "9.7.0")
+bazel_dep(name = "rules_jvm_external", version = "6.7")
 
 # Setup GraalVM Toolchain (Java 25 Community Edition)
 gvm = use_extension("@rules_graalvm//:extensions.bzl", "graalvm")
 gvm.graalvm(
     name = "graalvm",
-    version = "25.0.0",
     distribution = "community",
     java_version = "25",
+    version = "25.0.0",
 )
 use_repo(gvm, "graalvm")
 
@@ -18,6 +19,25 @@ register_toolchains("@graalvm//:jvm", "@graalvm//:sdk")
 
 git_override(
     module_name = "rules_graalvm",
+    commit = "40bbecd298c2357d3796eff2988793deffd2a782",
     remote = "https://github.com/sgammon/rules_graalvm.git",
-    branch = "main",
 )
+
+# Setup Maven Dependencies
+maven = use_extension("@rules_jvm_external//:extensions.bzl", "maven")
+maven.install(
+    artifacts = [
+        "org.jspecify:jspecify:1.0.0",
+        "org.jline:jansi:4.3.1",
+        "org.jline:jline-terminal:4.3.1",
+        "org.jline:jline-terminal-jni:4.3.1",
+        "org.jline:jline-reader:4.3.1",
+        "com.uber.nullaway:nullaway:0.13.8",
+        "info.picocli:picocli:4.7.6",
+        "info.picocli:picocli-codegen:4.7.6",
+    ],
+    fetch_javadoc = True,
+    fetch_sources = True,
+    lock_file = "//:maven_install.json",
+)
+use_repo(maven, "maven")

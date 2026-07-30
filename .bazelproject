@@ -1,0 +1,3 @@
+# This project view file is used by the Bazel plugin and Salesforce Bazel Java extension.
+derive_targets_from_directories: true
+directories: .
