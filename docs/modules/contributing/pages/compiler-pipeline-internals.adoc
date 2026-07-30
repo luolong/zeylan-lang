@@ -146,6 +146,40 @@ To keep the official language specification and the parser implementation aligne
 2. *Structural Drift*: The tool verifies that the token and method-call sequence inside the parser method (e.g., calling `match(Token.VAL)` and `parseExpression()`) matches the order specified in the `@GrammarRule` EBNF string.
 3. *Dead Rules*: Any annotated parser method that is unreachable from the grammar's entry point (`CompilationUnit`) is flagged as a dead grammar rule.
 
+=== Automating Syntax Highlighting via EBNF
+
+We can reuse the compiler's EBNF annotations to automate the maintenance of syntax highlighting libraries so they never drift from the language parser. Below is how our annotations map to various editor ecosystems:
+
+[cols="1,2,2", options="header"]
+|===
+| Target / Editor | Underlying Engine | Automation Strategy
+
+| *Tree-sitter* +
+(Neovim, Helix, Zed, VS Code)
+| JS-based grammar definition (`grammar.js`) compiled into a fast C parser.
+| EBNF maps structurally to Tree-sitter DSL. A transpiler script (`tree-sitter-ebnf-generator`) can convert our extracted EBNF directly into a `grammar.js` boilerplate (sequences `seq()`, alternatives `choice()`, loops `repeat()`).
+
+| *GitHub & GitLab*
+| GitHub Linguist (originally TextMate regex, migrating to Tree-sitter).
+| When you register Zeylan in GitHub's Linguist, you point to our compiler-generated Tree-sitter or TextMate repository. This guarantees syntax highlighting on pull requests and code search works out of the box.
+
+| *TextMate & Sublime* +
+(VS Code, TextMate, Sublime)
+| Oniguruma regex rules in JSON/PLIST (`.tmLanguage`) or YAML (`.sublime-syntax`).
+| While nested regexes cannot be fully generated from EBNF, the keyword, operator, and delimiter token lists can be scraped from the EBNF literals (e.g. `"performs"`, `"=>"`) and injected into a regex template to automatically update keyword lists.
+
+| *Vim / Classic Editors*
+| Script-based regex keyword lists (`.vim` syntax files).
+| A script can scrape the EBNF terminals and automatically generate Vim syntax match definitions (e.g., `syntax keyword zeylanKeyword val performs`).
+
+| *CodeMirror (v6)*
+| Lezer parser generator (`.grammar` file compiled to JS).
+| Lezer's notation is a direct derivative of EBNF (choice `\|`, loops `*`/`+`, optional `?`). The compiler toolchain can translate Zeylan EBNF rules into Lezer rule blocks (`Rule { expression* }`) to power web-based editors.
+|===
+
+3. *Semantic Highlighting via LSP*: Because the compiler frontend maintains clean side-tables of resolved names and types mapped by `NodeId`, the Language Server (LSP) can query these tables to emit precise Semantic Tokens to the editor (e.g., distinguishing custom Type names from variables).
+
+
 == 7. Summary Checklist for Developers
 
 When writing compiler code during the bootstrap phase, always ask:
@@ -158,5 +192,6 @@ When writing compiler code during the bootstrap phase, always ask:
    * _Answer must be NO._ Once the parser finishes, AST nodes are read-only. Use side-tables for semantic variables.
 4. *“Am I using complex JVM libraries that make self-hosting in Zeylan difficult?”*
    * _Answer must be NO._ Rely on simple language features, sealed types, and record structures.
+
 
 
