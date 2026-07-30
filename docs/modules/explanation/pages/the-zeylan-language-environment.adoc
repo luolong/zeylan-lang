@@ -64,7 +64,7 @@ Zeylan eliminates the async/await distinction. Under the hood, asynchronous sche
 ----
 shared UserProfile getProfile(String userId) performs Database | Logger {
     Logger.info("Fetching profile for " + userId);
-    val user = Database.findUser(userId);
+    value user = Database.findUser(userId);
     return UserProfile(user.name, user.email);
 }
 ----
@@ -84,12 +84,12 @@ In Zeylan, dependency injection is a compiler-enforced language feature.
 [source,ceylon]
 ----
 shared void runApplication() {
-    val realDb = PostgresDatabase("jdbc:postgresql://...");
-    val systemLogger = ConsoleLogger();
+    value realDb = PostgresDatabase("jdbc:postgresql://...");
+    value systemLogger = ConsoleLogger();
 
     // Bind capabilities to concrete instances at the application root
     handle {
-        val profile = getProfile("user_123");
+        value profile = getProfile("user_123");
         print("User profile email: " + profile.email);
     } with {
         Database => realDb;
@@ -103,10 +103,10 @@ For testing, you swap the handler implementation instantly, with no frameworks r
 [source,ceylon]
 ----
 shared void testGetProfile() {
-    val mockDb = InMemoryDatabase();
-    val silentLogger = NoOpLogger();
+    value mockDb = InMemoryDatabase();
+    value silentLogger = NoOpLogger();
     
-    val profile = handle {
+    value profile = handle {
         getProfile("user_123");
     } with {
         Database => mockDb;
@@ -160,13 +160,13 @@ shared void processOrder(String orderId) performs Workflow {
     Workflow.info("Starting order process for " + orderId);
     
     // Durable execution of an external activity (tracked and logged)
-    val paymentResult = Workflow.executeActivity(chargePayment, orderId);
+    value paymentResult = Workflow.executeActivity(chargePayment, orderId);
     
     if (paymentResult.success) {
         // Durable sleep: execution is paused, serialized to DB, and resumed in 3 days
         Workflow.sleep(Duration.days(3));
         
-        val shipped = Workflow.executeActivity(shipItems, orderId);
+        value shipped = Workflow.executeActivity(shipItems, orderId);
         Workflow.info("Order shipment status: " + shipped.toString());
     }
 }

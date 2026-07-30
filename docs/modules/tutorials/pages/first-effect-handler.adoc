@@ -21,7 +21,7 @@ shared void processUser(String id) performs Logger {
 }
 
 shared void run() {
-    val quietLogger = object satisfies Logger {
+    value quietLogger = object satisfies Logger {
         shared actual void log(String message) { /* silent */ }
     };
 

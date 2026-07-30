@@ -45,17 +45,17 @@ shared pure Float calculateTax(Float amount, Float rate) => amount * rate;
 // 2. Function requiring ambient capabilities
 shared UserProfile getProfile(String userId) performs Database | Logger {
     Logger.info("Fetching profile for " + userId);
-    val user = Database.findUser(userId);
+    value user = Database.findUser(userId);
     return UserProfile(user.name, user.email);
 }
 
 // 3. Testing with first-class, injected mock handlers
 shared void testGetProfile() {
-    val mockDb = InMemoryDatabase();
-    val silentLogger = NoOpLogger();
+    value mockDb = InMemoryDatabase();
+    value silentLogger = NoOpLogger();
     
     // Map Capability Types (Database, Logger) to concrete instances
-    val profile = handle {
+    value profile = handle {
         getProfile("user_123");
     } with {
         Database => mockDb;

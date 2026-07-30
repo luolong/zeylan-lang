@@ -6,10 +6,10 @@ This guide shows how to inject in-memory test doubles for database effects witho
 [source,zeylan]
 ----
 shared void testGetProfile() {
-    val mockDb = InMemoryDatabase();
-    val silentLogger = NoOpLogger();
+    value mockDb = InMemoryDatabase();
+    value silentLogger = NoOpLogger();
 
-    val profile = handle {
+    value profile = handle {
         getProfile("usr_123");
     } with {
         Database => mockDb;
