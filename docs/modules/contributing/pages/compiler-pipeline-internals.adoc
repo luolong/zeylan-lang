@@ -170,14 +170,14 @@ We can reuse the compiler's EBNF annotations to automate the maintenance of synt
 
 | *Vim / Classic Editors*
 | Script-based regex keyword lists (`.vim` syntax files).
-| A script can scrape the EBNF terminals and automatically generate Vim syntax match definitions (e.g., `syntax keyword zeylanKeyword val performs`).
+| A script can scrape the EBNF terminals and automatically generate Vim syntax match definitions (e.g., `syntax keyword zeylanKeyword value performs`).
 
 | *CodeMirror (v6)*
 | Lezer parser generator (`.grammar` file compiled to JS).
 | Lezer's notation is a direct derivative of EBNF (choice `\|`, loops `*`/`+`, optional `?`). The compiler toolchain can translate Zeylan EBNF rules into Lezer rule blocks (`Rule { expression* }`) to power web-based editors.
 |===
 
-3. *Semantic Highlighting via LSP*: Because the compiler frontend maintains clean side-tables of resolved names and types mapped by `NodeId`, the Language Server (LSP) can query these tables to emit precise Semantic Tokens to the editor (e.g., distinguishing custom Type names from variables).
+* *Semantic Highlighting via LSP*: Because the compiler frontend maintains clean side-tables of resolved names and types mapped by `NodeId`, the Language Server (LSP) can query these tables to emit precise Semantic Tokens to the editor (e.g., distinguishing custom Type names from variables).
 
 
 == 7. Summary Checklist for Developers

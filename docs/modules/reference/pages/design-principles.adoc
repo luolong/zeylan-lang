@@ -1,0 +1,102 @@
+= Language Design Principles
+:navtitle: Design Principles
+
+Zeylan is built with a strong focus on developer ergonomics, static verification, and code readability. A cornerstone of the language's philosophy is the preference for complete words over arbitrary abbreviations.
+
+This document describes the core design principles of Zeylan and how they apply to both the language itself and the codebase implementing it.
+
+---
+
+== 1. Complete English Words over Abbreviations
+
+To maximize readability and maintainability, Zeylan establishes a strict rule: **avoid abbreviations in both keywords and identifiers**.
+
+=== Rationale
+* **Code is Read More Than Written:** While shorthand like `fn`, `val`, or `pub` saves a few keystrokes during initial coding, it increases cognitive load during reading and review. Complete words read naturally and flow like prose.
+* **Elimination of Arbitrary Mappings:** Abbreviations are often non-standard across ecosystems (e.g., is it `fn`, `fun`, `func`, or `def`? Is it `val`, `let`, `var`, or `const`?). Using complete words makes the language intuitive and eliminates arbitrary naming rules.
+* **Prose-like Flow:** Keywords and library APIs should align with standard English structure to make the code self-documenting.
+
+=== Application to Language Syntax (Keywords)
+All native keywords in Zeylan are complete English words. The table below compares Zeylan keywords against common abbreviations used in other languages:
+
+[cols="1,2,2",options="header"]
+|===
+| Concept | Other Languages | Zeylan Keyword
+
+| Variable Declaration
+| `val`, `let`, `var`
+| `value`
+
+| Function Declaration
+| `fn`, `fun`, `def`
+| `function`
+
+| Visibility / Export
+| `pub`
+| `shared`
+
+| Type Implementation
+| `impl`, `extends`
+| `satisfies`
+
+| Effect Declaration
+| `throws`, `eff`
+| `performs`
+
+| Module Definition
+| `mod`
+| `module`
+|===
+
+=== Application to Library APIs (Identifiers)
+The standard library (`std.*`) avoids abbreviating class, method, variable, and parameter names:
+* Use `duration` instead of `dur`
+* Use `continuation` instead of `cont`
+* Use `exception` instead of `ex`
+* Use `parameter` instead of `param`
+* Use `message` instead of `msg`
+
+=== Allowed Exceptions: Standard Acronyms
+The only exceptions to this principle are common technical, protocol, or standard acronyms. Spelling these out completely would be too cumbersome and would actually reduce clarity, since the abbreviated forms are universally understood and have zero or low chance of confusion.
+
+Examples of allowed standard acronyms include:
+* Network Protocols & Formats: `TCP`, `UDP`, `HTTP`, `IP`
+* Data Formats & Encodings: `JSON`, `XML`, `UTF` (e.g., `UTF8`)
+* Time/Standards: `UTC`, `GMT`
+* Common Computing Primitives: `CPU`, `OS`, `IO`
+
+---
+
+== 2. Application to the Compiler Implementation
+
+The "Complete Words" design principle is not limited to the user-facing language; it is strictly mirrored in the internal code style of the compiler implementation (written in Java).
+
+When contributing to the bootstrap compiler, developers must use full words for packages, classes, methods, variables, and parameters:
+
+[cols="1,2",options="header"]
+|===
+| Disallowed Abbreviated Name | Required Complete Name
+
+| `DiagnosticReporter diagRep`
+| `DiagnosticReporter diagnosticReporter`
+
+| `SourceSpan srcSpan`
+| `SourceSpan sourceSpan`
+
+| `TokenType tokType`
+| `TokenType tokenType`
+
+| `String id`
+| `String identifier`
+
+| `Token tok`
+| `Token token`
+
+| `Diagnostic diag`
+| `Diagnostic diagnostic`
+
+| `List<Node> exprs`
+| `List<Node> expressions`
+|===
+
+By enforcing this naming convention inside the compiler codebase, we ensure that the compiler's own development environment is as clean, readable, and self-documenting as the code written in Zeylan.

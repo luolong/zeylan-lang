@@ -1,4 +1,105 @@
 = Why Algebraic Effects over Async/Await?
 :navtitle: Why Algebraic Effects?
+:document-type: Position Paper
+
+[NOTE]
+====
+*Document Type:* Position Paper. This document outlines a conceptual vision and design philosophy for managing control flow and dependencies in Zeylan, rather than a finalized implementation specification.
+====
 
 An architectural deep dive into why Zeylan uses row-polymorphic algebraic effects to eliminate the "colored function" problem and simplify dependency injection.
+
+
+== 1. The Challenge of Modern Control Flow
+
+In modern software development, applications are highly interactive, distributed, and concurrent. We frequently interact with databases, call third-party APIs, and execute parallel computations. To keep systems responsive, these operations must be non-blocking and asynchronous.
+
+However, traditional language designs force a steep architectural compromise to achieve this:
+1. **Monadic Wrappers:** Forcing all asynchronous results into wrapper types (like `Promise<T>`, `Task<T>`, or `Mono<T>`).
+2. **Function Coloring:** Splitting the language into synchronous and asynchronous functions via special keywords (`async`/`await`).
+3. **Implicit Dependencies:** Relying on heavy runtime dependency injection (DI) frameworks that use reflection and pollute stack traces.
+
+Zeylan unifies these concerns under a single, cohesive language feature: **first-class algebraic effects**.
+
+---
+
+== 2. The "Colored Function" Split
+
+In languages like JavaScript, Rust, C#, and Python, adding asynchronous network behavior to a function changes its type signature and how it must be called:
+
+* A synchronous function cannot call an asynchronous function without blocking the thread or changing its signature to return a `Promise`.
+* Once a helper function is marked `async`, every caller up the call stack must also be marked `async` and use the `await` keyword.
+* This partitions the codebase into two incompatible "colors"—synchronous and asynchronous.
+
+Zeylan eliminates the `async`/`await` keywords entirely. A function that performs an asynchronous operation simply lists the capability in its effect row:
+
+[source,zeylan]
+----
+shared UserProfile getProfile(String userId) performs Database | Logger {
+    Logger.info("Fetching profile for " + userId);
+    value user = Database.findUser(userId); // Non-blocking!
+    return UserProfile(user.name, user.email);
+}
+----
+
+Notice that the return type of `Database.findUser` is a plain `User` (not `Promise<User>`), and `getProfile` returns `UserProfile` directly. The asynchronous nature of the operation is captured entirely by the capability row (`performs Database | Logger`).
+
+For a detailed breakdown of the proposed asynchronous interface and execution mechanics, see xref:async-handling.adoc[Async Handling under Algebraic Effects].
+
+---
+
+== 3. Boilerplate-Free Dependency Injection
+
+In typical enterprise architectures, we use interfaces to decouple code from concrete external databases or services, enabling unit testing with in-memory mocks. To manage this decoupling, we use dependency injection (DI) containers which introduce significant runtime reflection, slow startup times, and opaque stack traces.
+
+In Zeylan, dependency injection is a native compiler feature:
+1. **Declare Capabilities:** Functions explicitly state what external capabilities they perform (`performs Database`).
+2. **Handle at the Boundary:** The application entry point (or test harness) handles the effect by providing a concrete implementation.
+
+[source,zeylan]
+----
+// Production handler binding
+handle {
+    getProfile("user123");
+} with {
+    Database => PostgresDatabase(prodDbUri);
+    Logger   => ConsoleLogger();
+}
+
+// Unit test handler binding
+handle {
+    getProfile("user123");
+} with {
+    Database => MockDatabase();
+    Logger   => NullLogger();
+}
+----
+
+Because the binding is scoped to the execution block, there are no global injection containers. Lifetimes and scopes are naturally managed by the call stack.
+
+---
+
+== 4. Summary of Benefits
+
+[cols="1,2,2",options="header"]
+|===
+| Dimension | Traditional Model (Node / Java / C#) | Effect-Native Model (Zeylan)
+
+| *Concurrency Syntax*
+| Verbose `async` / `await` keywords and monadic pipelines.
+| Synchronous-looking, sequential code.
+
+| *Return Types*
+| Wrapper types (`Promise<T>`, `Task<T>`, `Flux<T>`).
+| Plain types (`T`). Capability is in the effect row.
+
+| *Dependency Injection*
+| Runtime reflection, DI container configurations, and annotations.
+| Compiler-verified `handle ... with` capability bindings.
+
+| *Stack Preservation*
+| Lost stack traces across asynchronous boundaries.
+| Fully preserved stack traces using delimited continuations.
+|===
+
+To see how these concepts are applied to real-world architectures, read xref:application-frameworks.adoc[Effect-Native Application Frameworks].

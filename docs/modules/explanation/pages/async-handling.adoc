@@ -1,0 +1,156 @@
+= Async Handling under Algebraic Effects
+:navtitle: Async Handling
+:document-type: Design Proposal
+
+[NOTE]
+====
+*Document Type:* Design Proposal. This document details conceptual programming primitives, interfaces, and patterns for asynchronous execution in Zeylan, rather than a finalized implementation specification.
+====
+
+This document analyzes a candidate architectural proposal for asynchronous programming in Zeylan, a spiritual successor to Ceylon. It demonstrates how asynchronous execution can be modeled purely via algebraic effects, bypassing traditional syntax compromises.
+
+== 1. Domain & Core Paradigm
+
+* *Language Context:* Zeylan utilizes a set-theoretic type system ($A \mid B$, $A \ \& \ B$) with first-class, row-polymorphic algebraic effect handlers.
+* *Core Philosophy:* Asynchrony is *not* a language keyword (`async`/`await`), nor does it alter function return types (`T` remains `T`, not `Promise<T>`). Instead, asynchrony is modeled strictly as an *ambient capability interface* (`Async`) managed via delimited continuations and fiber dispatch.
+* *Elimination of "Function Coloring":* There is no distinction between synchronous and asynchronous functions in their signatures. A function requiring non-blocking execution simply includes `Async` in its effect row (e.g. `performs Async | Network`).
+
+---
+
+== 2. Core Primitives & Interface Contracts
+
+The `Async` capability interface (part of `std.async`) provides the low-level contracts for fiber manipulation and suspension:
+
+[source,zeylan]
+----
+shared interface Async {
+    shared formal T await<T>(Future<T> future);
+    shared formal Fiber<T> fork<T>(T computation() performs Async);
+    shared formal void sleep(Duration duration);
+}
+----
+
+=== Execution Mechanics (Under the Hood)
+
+* *Suspension:* When a non-blocking operation suspends (e.g., IO wait or `sleep`), the runtime captures the execution stack as a *delimited continuation* (`Continuation<T>`).
+* *Event Loop Integration:* The continuation token is registered with an OS-level event loop (`io_uring`, `epoll`, `kqueue`, or virtual clock). The current native OS thread is freed immediately.
+* *Resumption:* Upon completion of the IO event, the event loop schedules `continuation.resume(value)`, placing the fiber back onto the execution queue.
+
+---
+
+== 3. Ergonomics & Syntactic Expressions
+
+While the underlying engine operates on continuation handlers, Zeylan provides lightweight syntactic sugar to eliminate boilerplate:
+
+[cols="1,2,2",options="header"]
+|===
+| Expression | Desugared Form | Semantics
+
+| `fork expr`
+| `Async.fork(() => expr)`
+| Spawns a lightweight concurrent fiber. Returns `Fiber<T>`.
+
+| `fiber.await()`
+| `Async.await(fiber)`
+| Yields continuation until the fiber completes and returns `T`.
+
+| `value (a, b) = await (fork A(), fork B())`
+| Combined fiber wait
+| Executes `A()` and `B()` in parallel, suspending until both settle.
+
+| `!` (Unwrap Operator)
+| Short-circuit yield
+| Unwraps union types or yields failure to the `Error` capability handler.
+|===
+
+---
+
+== 4. Key Architectural Patterns
+
+=== Pattern A: Parallel Join / Structured Concurrency
+
+[source,zeylan]
+----
+shared DashboardOverview loadDashboard(String userId) 
+    performs Async | Network | Database {
+    
+    // Spawns concurrent fibers and waits for all results
+    value (user, orders, notifications) = await (
+        fork Database.findUser(userId),
+        fork Network.getOrders(userId),
+        fork Network.getNotifications(userId)
+    );
+
+    return DashboardOverview(user, orders, notifications);
+}
+----
+
+=== Pattern B: Timeouts, Retries, and Fault Tolerance
+
+Because `Async` is an algebraic effect, behavior modifications (timeouts, retries, circuit breakers) do not require wrapping promises or rewriting business logic. They are applied externally via *handler decorators*:
+
+[source,zeylan]
+----
+// Wrap an async block with an explicit timeout handler
+value data = handle {
+    Network.getFastData();
+} with {
+    Async => AsyncTimeoutHandler(limit = 2.seconds, fallback = DefaultData())
+};
+----
+
+=== Pattern C: Race Conditions & Auto-Cancellation (`select`)
+
+The `select` block evaluates multiple fibers concurrently, returns the result of the first fiber to complete, and automatically cancels remaining child continuations:
+
+[source,zeylan]
+----
+value winner = select {
+    res1 from f1 => res1,
+    res2 from f2 => res2,
+    res3 from f3 => res3
+};
+----
+
+=== Pattern D: Async Streaming (Channels)
+
+Multi-value asynchronous responses (WebSockets, SSE, DB cursors) do not use complex reactive streams (RxJS/Observables). They consume `Channel<T>` via standard loops, where each iteration suspends fiber execution until the next chunk arrives:
+
+[source,zeylan]
+----
+shared void streamPrices(String symbol) performs Async | Network | UI {
+    value priceChannel = Network.streamPrices(symbol);
+    for (price in priceChannel) {
+        UI.updateTicker(price.value); // Fiber suspends between emissions
+    }
+}
+----
+
+---
+
+== 5. Architectural Evaluation Matrix
+
+[cols="1,2,2",options="header"]
+|===
+| Dimension | Traditional Model (Node/C#/Rust) | Zeylan Effect Model
+
+| *Type Overhead*
+| `Promise<T>` / `Task<T>` / `Future<T>` wrappers
+| Plain return type `T` (Capability declared in row)
+
+| *Function Compatibility*
+| Colored functions (`async` cannot be called from sync without blocking)
+| Single function model (Inference handles propagation)
+
+| *Runtime Control*
+| Hardcoded global event loop
+| Pluggable handlers (`io_uring` in prod vs. `VirtualClock` in tests)
+
+| *Testability*
+| Complex timer mocks & async test harnesses
+| In-memory `VirtualClockAsyncHandler` runs 10s sleeps in 0ms
+
+| *Cancellation*
+| Manual token passing (`CancellationToken`)
+| Hierarchical fiber cancellation via delimited continuations
+|===

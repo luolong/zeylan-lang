@@ -1,0 +1,175 @@
+= Reactive Programming under Algebraic Effects
+:navtitle: Reactive Programming
+:document-type: Design Proposal
+
+[NOTE]
+====
+*Document Type:* Design Proposal. This document details conceptual programming primitives, interfaces, and patterns for reactive programming in Zeylan, rather than a finalized implementation specification.
+====
+
+In modern application development, handling asynchronous event streams, propagating changes, and building user interfaces require some form of reactive programming. In languages like JavaScript (with RxJS) or Java (with Project Reactor), developers must wrap their data flows in monadic containers like `Observable`, `Flux`, or `Mono`. 
+
+While powerful, this monadic approach introduces significant overhead:
+* **The "Colored Function" Problem:** Asynchronous reactive code cannot easily compose with synchronous blocking code.
+* **Monadic Pipeline Noise:** Code is littered with operators like `.pipe(map(), filter(), flatMap())` instead of standard language constructs.
+* **Complex Lifetimes:** Subscriptions must be manually managed or untangled to avoid resource/memory leaks.
+* **Opaque Stack Traces:** Asynchronous boundaries break standard thread stack traces, making debugging extremely difficult.
+
+In an **effect-native language** like Zeylan, we shift the reactive paradigm. Instead of wrapping *values* in container types, we represent *event occurrences, control suspension, and change propagation* as first-class **algebraic effects**. 
+
+---
+
+== 1. Streams as Multi-Shot Algebraic Effects
+
+At its core, a stream is a producer that emits values over time to a consumer. In Zeylan, we can represent this using a `Yield<T>` effect:
+
+[source,zeylan]
+----
+effect Yield<T> {
+    void yield(T value);
+}
+----
+
+Because algebraic effects capture the **delimited continuation** (the rest of the computation following the effect call), handlers can control how, when, and if the producer resumes.
+
+=== Implementing a Producer
+A producer is a standard function that performs the `Yield` effect whenever it has a new value. Notice that it looks and behaves like normal, sequential code:
+
+[source,zeylan]
+----
+void generateNumbers() performs Yield<Integer> {
+    variable Integer i = 0;
+    while (i < 10) {
+        perform yield(i);
+        i++;
+    }
+}
+----
+
+---
+
+== 2. Implementing Reactive Operators
+
+In monadic reactive programming, every operator (`map`, `filter`, `scan`) is a custom class implementing a subscription interface. In Zeylan, operators are simply functions that execute an effectful block, handle its `Yield` effect, and perform a new `Yield` effect.
+
+=== Stateless Transformations
+A `filter` operator handles the `Yield` effect of a source stream, checks the predicate, and conditionally propagates a new `yield`:
+
+[source,zeylan]
+----
+void filter<T>(void() source, Boolean(T) predicate) performs Yield<T> {
+    handle source() {
+        case yield(value) => {
+            if (predicate(value)) {
+                perform yield(value);
+            }
+            resume(); // Continue the producer execution
+        }
+    }
+}
+----
+
+=== Stateful Accumulators
+Stateful operators like `scan` (reactive accumulator) or `buffer` typically require managing hidden instance variables. In Zeylan, stateful operators are simple functions where the state lives naturally inside the operator's stack frame:
+
+[source,zeylan]
+----
+void scan<T, R>(void() source, R initial, R(R, T) accumulator) performs Yield<R> {
+    variable R current = initial;
+
+    handle source() {
+        case yield(value) => {
+            current = accumulator(current, value);
+            perform yield(current);
+            resume();
+        }
+    }
+}
+----
+
+---
+
+== 3. Time, Asynchrony, and Schedulers
+
+Time-based operators (like `delay`, `debounce`, or `throttle`) in other systems require passing explicit `Scheduler` objects. 
+
+In Zeylan, scheduling is handled by composing multiple effects. For instance, a `delay` operator simply combines the `Yield` effect with an asynchronous `Timer` capability:
+
+[source,zeylan]
+----
+void delay<T>(void() source, Duration duration) performs Yield<T> | Timer {
+    handle source() {
+        case yield(value) => {
+            perform sleep(duration); // Suspends execution via Timer capability
+            perform yield(value);
+            resume();
+        }
+    }
+}
+----
+
+Because the handler controls the continuation, calling `perform sleep` suspends the entire generator's continuation until the timer triggers.
+
+---
+
+== 4. Lifecycle Control and Cancellation
+
+One of the hardest aspects of reactive programming is cancellation (e.g., unsubscribing to avoid memory leaks).
+
+In an effect-native language, **cancellation is done by discarding the continuation** (i.e., choosing not to call `resume()`).
+
+=== Implementing `take(limit)`
+The `take` operator limits the number of items emitted. Once the limit is reached, it simply returns, causing the producer to terminate and run its scope finalizers immediately:
+
+[source,zeylan]
+----
+void take<T>(void() source, Integer limit) performs Yield<T> {
+    variable Integer count = 0;
+
+    handle source() {
+        case yield(value) => {
+            if (count < limit) {
+                perform yield(value);
+                count++;
+                resume(); // Continue generator execution
+            }
+            // By returning without calling resume(), 
+            // the source stream's execution is aborted.
+        }
+    }
+}
+----
+
+=== Higher-Order Streams (`switchMap`)
+Higher-order streams (streams of streams) can be coordinated by spawning concurrent tasks (via the `Async` capability's `fork` primitive, as analyzed in xref:async-handling.adoc[Async Handling]) and managing their continuation tasks. For a `switchMap` style behavior, when the outer stream yields a new value, the handler terminates the active continuation of the previous inner stream and starts a new one.
+
+---
+
+== 5. Architectural Benefits in Zeylan
+
+Comparing the effectful approach to traditional reactive frameworks highlights several structural benefits:
+
+[cols="1,2,2", options="header"]
+|===
+| Feature | Monadic Reactive (e.g., RxJS, RxJava) | Effect-Native Reactive (Zeylan)
+
+| **Type Signature**
+| Monadic container (e.g., `Observable<T>`)
+| Native return type with effect annotation (`performs Yield<T>`)
+
+| **Syntax & Loops**
+| Must use pipeline methods/combinators
+| Standard language loops (`while`, `for`) and conditions (`if`)
+
+| **Error Handling**
+| Special operators (`catchError`, `retry`)
+| Standard `try-catch` blocks inside/around handlers
+
+| **Stack Traces**
+| Broken, asynchronous stack traces
+| Intact stack traces maintained by the handler's execution state
+
+| **Lifetimes**
+| Manual `Subscription` management & disposal
+| Lexically bounded by the scope of the `handle` block
+|===

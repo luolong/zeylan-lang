@@ -1,4 +1,6 @@
 .Reference & Specifications
+* xref:design-principles.adoc[Language Design Principles]
 * xref:ebnf-grammar.adoc[EBNF Syntactic Grammar]
 * xref:type-system.adoc[Set-Theoretic Type System]
+* xref:type-algebra.adoc[Set-Theoretic Type Algebra]
 * xref:stdlib-core.adoc[Standard Library (`std.core`)]

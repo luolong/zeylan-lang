@@ -1,0 +1,188 @@
+= Durable Workflows under Algebraic Effects
+:navtitle: Durable Workflows
+:document-type: Design Proposal
+
+[NOTE]
+====
+*Document Type:* Design Proposal. This document details conceptual programming primitives, interfaces, and patterns for durable workflow execution in Zeylan, rather than a finalized implementation specification.
+====
+
+A **durable workflow** is a stateful program that is guaranteed to run to completion even in the presence of process crashes, server restarts, network splits, or database failures. Popularized by platforms like Temporal, Cadence, and AWS Step Functions, durable execution typically requires specialized SDKs and complex runtime wrappers.
+
+In an **effect-native language** like Zeylan, the core mechanics of durable execution—namely **determinism guarantees**, **event replay (event sourcing)**, and **state suspension**—can be modeled natively as compiler-enforced algebraic effects.
+
+---
+
+== 1. The Challenge of Durable Execution
+
+To survive restarts, a durable workflow engine must be able to reconstruct the exact state of a running workflow. There are two primary ways to do this:
+
+1. **State Serialization:** Saving the entire call stack, registers, and local variables to disk.
+2. **Event Sourcing / Replay:** Logging the results of all external side-effects (called **activities**, like database writes, HTTP calls, or reading the system clock). If the process crashes, the engine restarts the workflow from the beginning. During this replay, instead of re-executing activities, the engine returns the logged results from history.
+
+For replay to work, the workflow code must be **strictly deterministic**. If the workflow reads the system clock, generates a random number, or queries a database directly, the replay path will diverge, leading to non-deterministic errors.
+
+Traditional languages struggle with this because side-effects are implicit and cannot be statically blocked. In Zeylan, the compiler's **effect row system** solves this problem at compile-time.
+
+---
+
+== 2. Statically Enforced Determinism and Typed Activities
+
+In Zeylan, we can restrict a workflow's access to side-effects using the type system. A durable workflow function specifies the exact capabilities it performs, such as business-specific activity interfaces (e.g. `PaymentService`) and core orchestrator controls (e.g. `Workflow`).
+
+At the application boundary, these abstract capabilities are bound to concrete handlers (like the orchestrator's `ReplayHandler`) using a standard `handle ... with` block:
+
+[source,zeylan]
+----
+shared interface PaymentService {
+    shared formal CardInfo getPaymentDetails(String orderId);
+    shared formal void chargeCard(CardInfo card, Amount amount);
+}
+
+// A function defining a durable order-processing flow
+void processOrder(String orderId, Amount amount) performs PaymentService | Workflow {
+    // Statically allowed: calling a typed activity
+    value cardInfo = PaymentService.getPaymentDetails(orderId);
+    
+    // Statically allowed: safe workflow-scoped sleep
+    Workflow.sleep(Duration.days(1));
+
+    // Statically allowed: executing another activity
+    PaymentService.chargeCard(cardInfo, amount);
+}
+
+// Binding capability effects to the orchestrator replay handler
+void executeWorkflow(String orderId, Amount amount) {
+    value history = loadWorkflowHistory(orderId);
+    value handler = ReplayHandler(history); // implements Workflow & PaymentService
+
+    handle {
+        processOrder(orderId, amount);
+    } with {
+        PaymentService => handler;
+        Workflow       => handler;
+    };
+}
+----
+
+Because the function only performs `PaymentService` and `Workflow`, it **cannot** perform unauthorized or non-deterministic side-effects:
+* It cannot call raw database clients or print to the console directly, because those require `Database` or `IO` capabilities.
+* The compiler blocks compilation if any non-deterministic library function is called within the workflow body.
+
+However, because `Time` is represented as a standard capability, the `Workflow` interface can simply satisfy `Time`. This allows developers to use standard, familiar library calls like `Time.now()`. When the orchestrator executes the workflow, its handler intercepts the `Time` capability and returns the deterministic replay timestamp:
+
+[source,zeylan]
+----
+// Workflow inherits Time, making standard time calls safe and replayable
+shared interface Workflow satisfies Time {
+    shared formal void sleep(Duration duration);
+}
+
+// Inside the workflow:
+Instant now = Time.now(); // Deterministic and safe!
+----
+
+---
+
+== 3. Implementing the Replay Handler
+
+The execution of a durable workflow is managed by a **Replay Handler**. Under the hood, this handler implements both the core workflow controls (`Workflow`) and the workflow's specific activity capabilities (`PaymentService`).
+
+When an activity method like `PaymentService.getPaymentDetails(orderId)` is invoked:
+1. **Replay Phase:** The handler checks if an event matching this call is already in the event log history. If it exists, the handler returns the cached result directly. The code runs at CPU speed without making any network calls.
+2. **Execution Phase:** If it does not exist, the handler suspends the workflow execution, schedules the activity to run on a worker node, and logs the result once completed.
+
+Here is a simplified model of the interfaces and the replay handler implementation:
+
+[source,zeylan]
+----
+shared interface Time {
+    shared formal Instant now();
+}
+
+shared interface Workflow satisfies Time {
+    shared formal void sleep(Duration duration);
+}
+
+shared interface PaymentService {
+    shared formal CardInfo getPaymentDetails(String orderId);
+    shared formal void chargeCard(CardInfo card, Amount amount);
+}
+
+class ReplayHandler(List<Event> history) satisfies Workflow & PaymentService {
+    variable Integer historyIndex = 0;
+
+    // --- Workflow implementation ---
+
+    shared actual void sleep(Duration duration) {
+        // Suspend workflow execution via the runtime
+    }
+
+    shared actual Instant now() {
+        value event = history.get(historyIndex);
+        historyIndex++;
+        return event.timestamp;
+    }
+
+    // --- PaymentService implementation ---
+
+    shared actual CardInfo getPaymentDetails(String orderId) {
+        if (historyIndex < history.size) {
+            value event = history.get(historyIndex);
+            historyIndex++;
+            return event.result;
+        } else {
+            value result = scheduleActivity("getPaymentDetails", orderId);
+            return result;
+        }
+    }
+
+    shared actual void chargeCard(CardInfo card, Amount amount) {
+        if (historyIndex < history.size) {
+            historyIndex++;
+        } else {
+            scheduleActivity("chargeCard", card, amount);
+        }
+    }
+}
+----
+
+---
+
+== 4. Continuation Serialization
+
+In typical durable execution engines, when a workflow sleeps for 30 days, the process must either remain active in memory (wasting resources) or the engine must use complex compiler transforms to convert the code into a state machine (generating a virtual state-tree).
+
+Because Zeylan's algebraic effects capture the **delimited continuation** as a first-class stack object, the runtime can serialize this continuation object directly to a persistent database:
+
+1. When a workflow executes `Workflow.sleep(Duration.days(30))`, the handler captures the continuation (the remaining execution stack of the workflow).
+2. The handler serializes the continuation object to a database (e.g. Postgres) and frees up the execution thread.
+3. 30 days later, a timer fires.
+4. The engine reads the serialized continuation from the database, de-serializes it back into memory, and resumes it. 
+
+The developer writes natural, blocking-style code, while the runtime handles distributed suspension and resumption behind the scenes.
+
+---
+
+== 5. Architectural Benefits in Zeylan
+
+[cols="1,2,2", options="header"]
+|===
+| Feature | Traditional SDKs (e.g. Temporal) | Effect-Native (Zeylan)
+
+| **Determinism Check**
+| Runtime verification or custom static analysis tools.
+| Statically verified by the compiler's effect rows.
+
+| **Activity Declarations**
+| Requires registering interfaces and stub generation.
+| Declared as standard interface capabilities and composed statically in the function's effect signature (e.g. `performs PaymentService \| Workflow`).
+
+| **State Management**
+| Relies on thread-local hacks or intercepting framework APIs.
+| Naturally scoped by the handler's stack context.
+
+| **Suspension / Sleep**
+| Requires framework-specific sleep functions (`Workflow.sleep`).
+| Standard `Workflow.sleep` mapped to a suspending scheduler effect.
+|===

@@ -1,5 +1,13 @@
 .Architecture & Design Explanations
 * xref:the-zeylan-language-environment.adoc[The Zeylan Language Environment: A White Paper]
-* xref:why-algebraic-effects.adoc[Why Algebraic Effects?]
-* xref:set-theoretic-typing-explained.adoc[Set-Theoretic Typing Explained]
-* xref:roadmap.adoc[Layered Roadmap]
+* Position & Vision Papers
+** xref:why-algebraic-effects.adoc[Why Algebraic Effects?]
+** xref:application-frameworks.adoc[Effect-Native Application Frameworks]
+* Design Proposals & Studies
+** xref:async-handling.adoc[Async Handling under Algebraic Effects]
+** xref:reactive-programming.adoc[Reactive Programming under Algebraic Effects]
+** xref:durable-workflows.adoc[Durable Workflows under Algebraic Effects]
+* Explanatory Guides
+** xref:set-theoretic-typing-explained.adoc[Set-Theoretic Typing Explained]
+* Roadmap
+** xref:roadmap.adoc[Layered Roadmap]

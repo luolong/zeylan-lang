@@ -1,0 +1,108 @@
+= Set-Theoretic Type Algebra
+:navtitle: Type Algebra
+
+Zeylan's type system is built on mathematical set theory, meaning every type represents a set of values. This foundation extends directly to **capabilities and algebraic effects**, where interface method sets behave as sets of available operations.
+
+Because of this set-theoretic formulation, the behavior of union (`|`) and intersection (`&`) operators exhibits a dual nature when comparing value-level types (data structures) and capability-level types (interfaces or effect rows).
+
+---
+
+== 1. Values vs. Capabilities (Duality)
+
+To understand type algebra in Zeylan, we must distinguish between:
+*   **Value-Level Types:** Sets representing concrete data instances (e.g. `String`, `Integer`, user-defined classes).
+*   **Capability-Level Types:** Sets representing available operations or interface methods (e.g. `Logger`, `Database`, or custom effects).
+
+[cols="1,2,2", options="header"]
+|===
+| Operator | Value-Level Behavior | Capability-Level Behavior
+
+| **Union (`A \| B`)**
+| **Possibility of A or B:** A value that could be either `A` or `B`. Its concrete type must be proven (narrowed) at runtime before calling any methods.
+| **Possibility of Either Effect:** An effect row representing that the code might perform either effect `A` or `B`. (Requires the handler or class to cover both).
+
+| **Intersection (`A & B`)**
+| **Both A and B:** A value that satisfies both types simultaneously. Every operation on `A` and every operation on `B` is available directly.
+| **Operations common to both:** Limits the executable operations to only those common to both capabilities (used to narrow/sandbox).
+|===
+
+---
+
+== 2. The Union Operator (`A | B`)
+
+The union operator represents the **possibility** of either type or effect.
+
+=== Value Level: Possibility of Either Type
+At the value level, a union type represents a value that could belong to set `A` or set `B`. 
+*   **Signature:** `String | Integer`
+*   **Access:** You cannot call methods of `String` or `Integer` directly on the union value. You must first prove its concrete type at runtime using flow-sensitive type narrowing (e.g., `is` checks):
++
+[source,zeylan]
+----
+void printLength(String | Integer item) {
+    if (is String item) {
+        // Concrete type is proven to be String; methods are unlocked
+        print(item.size);
+    } else {
+        // Concrete type is proven to be Integer
+        print(item.string);
+    }
+}
+----
+
+=== Capability Level: Possibility of Either Effect
+At the capability/effect level, the union operator denotes that a computation might perform operations from either effect.
+*   **Signature:** `performs PaymentService | Workflow`
+*   **Meaning:** There is a possibility that this code performs operations from `PaymentService` or from `Workflow`. Therefore, the caller/handler must be capable of handling both.
+*   **Interface Satisfaction:** When a class implements multiple interfaces, it satisfies their intersection (belonging to both sets simultaneously). Since it belongs to both sets, it implements all methods from both:
++
+[source,zeylan]
+----
+class ReplayHandler(...) satisfies Workflow & PaymentService {
+    // Implements all methods of Workflow and all methods of PaymentService
+}
+----
+
+---
+
+== 3. The Intersection Operator (`A & B`)
+
+The intersection operator is the dual of the union operator.
+
+=== Value Level: Both Types (And)
+At the value level, an intersection type represents a value that belongs to both sets.
+*   **Signature:** `Identifiable & Serializable`
+*   **Meaning:** The object satisfies both interfaces at the same time, meaning **every operation on `Identifiable` and every operation on `Serializable` is available** for the type directly without any narrowing.
+
+=== Capability Level: Restriction (Sandboxing)
+At the capability/effect level, the intersection operator restricts the scope of allowed operations.
+*   **Signature:** `performs E & Mask`
+*   **Meaning:** The computation is only permitted to perform operations that are available on **both** interfaces (common to both `E` and `Mask`).
+*   **Duality to Complement:** This is mathematically equivalent to subtracting the unauthorized operations, which can also be modeled as relative complement (`E \ ~Mask`).
+*   **Sandboxing Use-Case:** This is used to restrict untrusted third-party callbacks to a safe subset of their normal effects. If `Mask` does not contain file system operations, the callback is blocked from executing them:
++
+[source,zeylan]
+----
+shared T sandbox<T, E, Mask>(T() callback)
+    performs (E & Mask)
+    given E satisfies Effect
+    given Mask satisfies Effect {
+    return callback();
+}
+----
+
+---
+
+== 4. Summary of Common Signatures
+
+*   **Method Effects (`performs A | B`):** The method can invoke any operation from capability `A` or capability `B`.
+*   **Interface Satisfaction (`satisfies A & B`):** The class implements all operations from interface `A` and interface `B` (satisfying their intersection).
+*   **Capability Sandboxing (`performs E & Mask`):** The capability set is intersected, restricting execution to only the operations common to both sets.
+
+[NOTE]
+====
+In practical application development, intersection types (`&`) in method `performs` clauses are rarely written manually. Unions (`|`) are the primary tool used by developers to compose multiple performed effects. Intersections are primarily reserved for:
+1. **Capability Sandboxing:** Restricting untrusted callbacks via a mask signature (e.g. `performs E & Mask`).
+2. **Platform Constraints:** Restricting imports or function compilation to environments that satisfy multiple target capabilities simultaneously (e.g. `given JavaScriptRuntime & DOM` or `with(Windows & X86_64)`).
+3. **Compiler Internals:** Internal effect signature inference and resolution algebra during compilation.
+====
