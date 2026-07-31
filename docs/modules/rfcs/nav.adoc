@@ -1,0 +1,2 @@
+.Design RFCs & Ideas
+* xref:capability-based-modules.adoc[Capability-Based Module System]

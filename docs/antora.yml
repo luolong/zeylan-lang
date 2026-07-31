@@ -9,3 +9,5 @@ nav:
   - modules/reference/nav.adoc
   - modules/explanation/nav.adoc
   - modules/contributing/nav.adoc
+  - modules/rfcs/nav.adoc
+
