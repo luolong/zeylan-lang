@@ -1,39 +1,60 @@
 = Zeylan Programming Language
 
-Zeylan is a modern programming language that evolves the set-theoretic type system and elegant syntax of **Ceylon** into a full-fledged algebraic effect system. It is designed for production software engineering, focusing on developer ergonomics, compile-time security, and architecture decoupling.
+Zeylan is a modern programming language that evolves the set-theoretic type system and elegant syntax of **Ceylon** into a full-fledged algebraic effect system.
+It is designed for production software engineering, focusing on developer ergonomics, compile-time security, and architecture decoupling.
 
 == Vision & Lineage
 
-For decades, software development has been caught in a false dichotomy: choose the pragmatic elegance of expressive, object-functional languages, or accept the rigid safety of pure, effect-restricted environments. 
+For decades, software development has been caught in a false dichotomy: choose the pragmatic elegance of expressive, object-functional languages, or accept the rigid safety of pure, effect-restricted environments.
 
-Zeylan is the spiritual successor to Ceylon. It reimagines Ceylon's set-theoretic foundation (`A | B`, `A & B`) to govern both values and side-effects. By merging this with an advanced algebraic effect system, Zeylan brings static purity, fine-grained capability security, and effortless testing together under one coherent, boilerplate-free paradigm.
+Zeylan is the spiritual successor to Ceylon.
+It reimagines Ceylon's set-theoretic foundation (`A | B`, `A & B`) to govern both values and side-effects.
+By merging this with an advanced algebraic effect system, Zeylan brings static purity, fine-grained capability security, and effortless testing together under one coherent, boilerplate-free paradigm.
 
 == Core Design Pillars
 
 Zeylan is built on four core design principles:
 
 === 1. Side-Effects by Default, Opt-in Purity
-To avoid cluttering your code, functions in Zeylan can perform side-effects by default. You can write regular code—like logging, updating variables, or querying databases—without annotating every single helper function, as the compiler automatically infers and propagates these required capabilities upstream. 
-Purity is an opt-in tool: when you write core algorithms or calculations that must be guaranteed free of side-effects, you mark them with the `pure` keyword. The compiler strictly checks that `pure` functions don't touch the outside world, unlocking safe optimizations like caching and concurrent execution.
+
+To avoid cluttering your code, functions in Zeylan can perform side-effects by default.
+You can write regular code—like logging, updating variables, or querying databases—without annotating every single helper function, as the compiler automatically infers and propagates these required capabilities upstream.
+Purity is an opt-in tool: when you write core algorithms or calculations that must be guaranteed free of side-effects, you mark them with the `pure` keyword.
+The compiler strictly checks that `pure` functions don't touch the outside world, unlocking safe optimizations like caching and concurrent execution.
 
 === 2. Decoupled Actions (Trivial Mocking & Testing)
-Instead of hardcoding how a function talks to the outside world, your code requests abstract actions (like `Database` or `Logger`). 
-The caller determines how those actions actually run (e.g. running a real SQL database vs. an in-memory test double). This decoupling makes testing and mocking effortless without the need for complex dependency injection frameworks.
+
+Instead of hardcoding how a function talks to the outside world, your code requests abstract actions (like `Database` or `Logger`).
+The caller determines how those actions actually run (e.g. running a real SQL database vs. an in-memory test double).
+This decoupling makes testing and mocking effortless without the need for complex dependency injection frameworks.
 
 === 3. Fearless Refactoring (No "Colored" Functions)
-In most languages, introducing asynchronous behavior or error handling to a function splits the language in two, forcing you to rewrite all callers up the stack (the classic `async/await` "colored functions" problem). In Zeylan, the compiler automatically tracks and bubbles up capabilities. You can introduce new capabilities, change error-handling strategies, or add caching without cascade-refactoring your entire codebase.
+
+In most languages, introducing asynchronous behavior or error handling to a function splits the language in two, forcing you to rewrite all callers up the stack (the classic `async/await` "colored functions" problem).
+In Zeylan, the compiler automatically tracks and bubbles up capabilities.
+You can introduce new capabilities, change error-handling strategies, or add caching without cascade-refactoring your entire codebase.
 
 === 4. Compiler-Enforced Supply-Chain Security
-Instead of relying on runtime permissions or post-facto security scanning, Zeylan moves security policy to the compiler. Third-party library modules are completely sandboxed by default and cannot access environment variables, files, or the network unless your module configuration file explicitly grants them those privileges.
+
+Instead of relying on runtime permissions or post-facto security scanning, Zeylan moves security policy to the compiler.
+Third-party library modules are completely sandboxed by default and cannot access environment variables, files, or the network unless your module configuration file explicitly grants them those privileges.
+
 
 == Replaced Design Patterns (Effects as First-Class Features)
 
-Many common enterprise design patterns are simply workarounds for missing language features. In Zeylan, algebraic effects render several of these patterns obsolete, replacing them with native language features:
+Many common enterprise design patterns are simply workarounds for missing language features.
+In Zeylan, algebraic effects render several of these patterns obsolete, replacing them with native language features:
 
-* **Dependency Injection & Service Locators**: Instead of setting up reflection-based DI containers or service locators, you declare requirements directly in the function signature (`performs Database`). The language handles injection natively at the calling boundary via `handle/with`.
-* **Middleware, Interceptors, and Decorators**: In web development, we use middleware or decorators to wrap code with logging, metrics, transaction management, or error handling. Because Zeylan handlers are first-class values, you compose them like standard functions.
-* **Thread-Locals & Context Drilling**: To pass tracing IDs, user sessions, or localization configurations deep into the call stack, developers either pass a bloated `Context` object through every intermediate function or use thread-local variables. In Zeylan, you declare a `Config` or `Tracing` effect. The value is implicitly accessible by any child function down the stack, but remains fully type-safe, thread-safe, and scoped to the handle block.
-* **Async/Await and Custom Error Wrappers**: Languages usually hardcode specific patterns for async operations (`async/await`) and error handling (`try/catch`). In Zeylan, asynchronous scheduling and error propagation are simply standard library effects. You handle them using the same syntax and compiler rules as any other capability, eliminating the need for separate runtime models or colored-function barriers.
+* **Dependency Injection & Service Locators**: Instead of setting up reflection-based DI containers or service locators, you declare requirements directly in the function signature (`performs Database`).
+The language handles injection natively at the calling boundary via `handle/with`.
+* **Middleware, Interceptors, and Decorators**: In web development, we use middleware or decorators to wrap code with logging, metrics, transaction management, or error handling.
+Because Zeylan handlers are first-class values, you compose them like standard functions.
+* **Thread-Locals & Context Drilling**: To pass tracing IDs, user sessions, or localization configurations deep into the call stack, developers either pass a bloated `Context` object through every intermediate function or use thread-local variables.
+In Zeylan, you declare a `Config` or `Tracing` effect.
+The value is implicitly accessible by any child function down the stack, but remains fully type-safe, thread-safe, and scoped to the handle block.
+* **Async/Await and Custom Error Wrappers**: Languages usually hardcode specific patterns for async operations (`async/await`) and error handling (`try/catch`).
+In Zeylan, asynchronous scheduling and error propagation are simply standard library effects.
+You handle them using the same syntax and compiler rules as any other capability, eliminating the need for separate runtime models or colored-function barriers.
 
 == Language at a Glance (Code Preview)
 
@@ -70,7 +91,8 @@ shared void testGetProfile() {
 
 === Prerequisites
 
-This repository uses link:https://mise.jdx.dev/[mise] to manage tool dependencies (such as Java, Bazel, and Node.js) and run tasks. Make sure `mise` is installed on your system.
+This repository uses link:https://mise.jdx.dev/[mise] to manage tool dependencies (such as Java, Bazel, and Node.js) and run tasks.
+Make sure `mise` is installed on your system.
 
 === Tooling Environment
 
@@ -83,6 +105,7 @@ The project's tools are specified in `mise.toml`:
 Mise will automatically download and set up these versions when you run tasks in this directory.
 
 === Building the Compiler
+
 To build the compiler targets (both JVM jar and GraalVM native image executable):
 
 [source,shell]
@@ -99,7 +122,8 @@ mise run run
 
 === Building the Documentation Site
 
-The documentation is structured using Antora. To build it locally:
+The documentation is structured using Antora.
+To build it locally:
 
 1. **Install Node.js and dependencies**:
 +
@@ -115,10 +139,13 @@ mise run docs:install
 mise run docs:build
 ----
 
-The output will be built in the `./build/site` directory. You can open `./build/site/index.html` in your browser to view it.
+The output will be built in the `./build/site` directory.
+You can open `./build/site/index.html` in your browser to view it.
 
 == Development & Contribution
 
 For detailed guides on setting up the compiler developer environment and details about the compiler pipeline, check:
+
 * link:docs/modules/contributing/pages/dev-environment.adoc[Compiler Developer Setup]
 * link:docs/modules/contributing/pages/compiler-pipeline-internals.adoc[Compiler Pipeline Internals]
+

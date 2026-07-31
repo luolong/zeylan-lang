@@ -39,15 +39,19 @@ graph TD
 
 == 2. Decoupled Compiler Pipeline
 
-The compilation pipeline is divided into clear passes. Each pass must run to completion on a target unit before proceeding to the next.
+The compilation pipeline is divided into clear passes.
+Each pass must run to completion on a target unit before proceeding to the next.
 
 === Pass 1: Lexer & Parser (Lossless CST)
+
 * *Action*: Converts raw `.zeylan` files into a token stream and then into a syntax tree.
-* *Rule*: The AST (or Concrete Syntax Tree) must be *immutable*. Nodes do not store parent pointers, resolved types, or dynamic scopes.
+* *Rule*: The AST (or Concrete Syntax Tree) must be *immutable*.
+Nodes do not store parent pointers, resolved types, or dynamic scopes.
 * *Design*: Nodes reference other nodes using *Node IDs* or index offsets rather than direct memory references.
 * *IDE Support*: Keep whitespace and trivia (comments) preserved as tokens or nodes indexed by position so that we can support refactoring and formatting in the future without re-parsing.
 
 === Pass 2: Semantic Analysis & Type Verification
+
 * *Action*: Resolves imports, validates type subtyping (`A | B`), performs row-polymorphic effect unification, and verifies lexical scoping.
 * *Rule*: Do not mutate AST nodes to attach type or scope information.
 * *Implementation*: Store all semantic decisions in *Context-Bound Side-Tables* mapped by `NodeId`:
@@ -60,8 +64,10 @@ Declaration target = compilationContext.getDeclarationOf(nodeId);
 ----
 
 === Pass 3: The Translation Bridge (Truffle Generator)
+
 * *Action*: Translates the verified Semantic AST/IR into dynamic runtime Truffle execution nodes.
-* *Rule*: Truffle AST nodes are strictly treated as codegen outputs. They are dynamically instantiated here and passed to the GraalVM execution framework.
+* *Rule*: Truffle AST nodes are strictly treated as codegen outputs.
+They are dynamically instantiated here and passed to the GraalVM execution framework.
 * *Future Swap*: When migrating away from Truffle, only this class (or pass) is replaced with a native backend code generator (e.g., generating LLVM, Cranelift, or custom machine code).
 
 == 3. Data-Oriented AST Design (Future-Proofing for Systems Port)
@@ -69,7 +75,8 @@ Declaration target = compilationContext.getDeclarationOf(nodeId);
 To make it easy to rewrite the compiler frontend in a systems language like Rust or Zig in the future:
 
 * Avoid deep class inheritance hierarchies for AST nodes.
-* Prefer flat representations. Represent syntax trees as tables of structs/records referencing child indices:
+* Prefer flat representations.
+Represent syntax trees as tables of structs/records referencing child indices:
 +
 [source,java]
 ----
@@ -81,7 +88,8 @@ public record ASTNode(
     int rightChildIdx  // Index in the flat node array (-1 if none)
 ) {}
 ----
-* Keep the entire AST of a file inside a single contiguous array wrapper. This avoids GC allocation thrashing on the JVM and translates directly to cache-friendly memory layouts (`MultiArrayList`) in Zig or Rust.
+* Keep the entire AST of a file inside a single contiguous array wrapper.
+This avoids GC allocation thrashing on the JVM and translates directly to cache-friendly memory layouts (`MultiArrayList`) in Zig or Rust.
 
 == 4. Semantic Firewalls for Incremental Safety
 
@@ -89,14 +97,18 @@ To prepare for fast incremental compilation loops, we establish boundaries that 
 
 * *Boundary Enforcement*: All top-level declarations (functions, methods, classes) *must have explicit type and effect signatures*.
 * *Local Inference Only*: Type and effect inference must be contained locally within function/method bodies.
-* *The Firewall Effect*: If a developer changes the body of a helper function, the type checker only re-evaluates that function body. Since the signature of the function remains identical, the compiler immediately halts propagation. No caller functions up the call stack need to be re-type-checked.
+* *The Firewall Effect*: If a developer changes the body of a helper function, the type checker only re-evaluates that function body.
+Since the signature of the function remains identical, the compiler immediately halts propagation.
+No caller functions up the call stack need to be re-type-checked.
 
 == 5. Designing for Self-Hosting (Portability to Zeylan)
 
 Since the initial parser will be written in Java but eventually self-hosted (ported to Zeylan itself), you should keep the codebase clean and translation-friendly.
 
-* *Prefer Hand-Written Recursive Descent*: Avoid parser generators like ANTLR or JavaCC. A hand-written recursive descent parser is highly readable, easy to debug, supports custom error recovery, and translates almost 1:1 into Zeylan's clean syntax.
-* *Use Java Sealed Interfaces and Records*: Represent the AST using Java's `sealed interface` and `record` keywords. This maps directly to Zeylan's class definitions and set-theoretic union types:
+* *Prefer Hand-Written Recursive Descent*: Avoid parser generators like ANTLR or JavaCC.
+A hand-written recursive descent parser is highly readable, easy to debug, supports custom error recovery, and translates almost 1:1 into Zeylan's clean syntax.
+* *Use Java Sealed Interfaces and Records*: Represent the AST using Java's `sealed interface` and `record` keywords.
+This maps directly to Zeylan's class definitions and set-theoretic union types:
 +
 [source,java]
 ----
@@ -111,7 +123,8 @@ Translates directly to Zeylan:
 // Zeylan representation
 shared interface Expression of Literal | BinaryExpression {}
 ----
-* *Simulate Algebraic Effects via Context Parameters*: In Java, avoid throwing heavy exceptions for parser diagnostics. Instead, pass a context reporter (like a `DiagnosticReporter` interface) to your functions:
+* *Simulate Algebraic Effects via Context Parameters*: In Java, avoid throwing heavy exceptions for parser diagnostics.
+Instead, pass a context reporter (like a `DiagnosticReporter` interface) to your functions:
 +
 [source,java]
 ----
@@ -138,17 +151,25 @@ shared void parseStatement() performs DiagnosticReporter {
 To keep the official language specification and the parser implementation aligned, the compiler architecture employs a **Code-First EBNF Generation** strategy during the bootstrap phase, transitioning to **Spec-First Verification** as the language matures.
 
 === The Annotation-Driven Strategy
-* *Bootstrap Phase (Code-First)*: Every parser rule method is annotated with a `@GrammarRule` containing its formal EBNF representation. An annotation tool parses these doc-annotations during compilation, validates structural matching inside the method body, and automatically generates a unified `grammar.ebnf` file in the Antora documentation directory (`docs/`). This eliminates double-editing and prevents documentation drift.
-* *Stabilization Phase (Spec-First)*: Once the language syntax stabilizes, the `grammar.ebnf` file is committed as the formal source of truth. A Bazel test target matches the compiler annotations against the spec file. If a developer edits the parser code and introduces syntax drift or leaves rules unimplemented, the build fails.
+
+* *Bootstrap Phase (Code-First)*: Every parser rule method is annotated with a `@GrammarRule` containing its formal EBNF representation.
+An annotation tool parses these doc-annotations during compilation, validates structural matching inside the method body, and automatically generates a unified `grammar.ebnf` file in the Antora documentation directory (`docs/`).
+This eliminates double-editing and prevents documentation drift.
+* *Stabilization Phase (Spec-First)*: Once the language syntax stabilizes, the `grammar.ebnf` file is committed as the formal source of truth.
+A Bazel test target matches the compiler annotations against the spec file.
+If a developer edits the parser code and introduces syntax drift or leaves rules unimplemented, the build fails.
 
 === Verification Rules
-1. *Unimplemented Rules*: The verification tool parses the grammar dependencies. If an EBNF rule references a non-terminal (e.g., `Statement ::= Assignment | IfStatement`) that does not have a corresponding annotated Java method, it flags a missing implementation error.
+
+1. *Unimplemented Rules*: The verification tool parses the grammar dependencies.
+If an EBNF rule references a non-terminal (e.g., `Statement ::= Assignment | IfStatement`) that does not have a corresponding annotated Java method, it flags a missing implementation error.
 2. *Structural Drift*: The tool verifies that the token and method-call sequence inside the parser method (e.g., calling `match(Token.VAL)` and `parseExpression()`) matches the order specified in the `@GrammarRule` EBNF string.
 3. *Dead Rules*: Any annotated parser method that is unreachable from the grammar's entry point (`CompilationUnit`) is flagged as a dead grammar rule.
 
 === Automating Syntax Highlighting via EBNF
 
-We can reuse the compiler's EBNF annotations to automate the maintenance of syntax highlighting libraries so they never drift from the language parser. Below is how our annotations map to various editor ecosystems:
+We can reuse the compiler's EBNF annotations to automate the maintenance of syntax highlighting libraries so they never drift from the language parser.
+Below is how our annotations map to various editor ecosystems:
 
 [cols="1,2,2", options="header"]
 |===
@@ -157,11 +178,13 @@ We can reuse the compiler's EBNF annotations to automate the maintenance of synt
 | *Tree-sitter* +
 (Neovim, Helix, Zed, VS Code)
 | JS-based grammar definition (`grammar.js`) compiled into a fast C parser.
-| EBNF maps structurally to Tree-sitter DSL. A transpiler script (`tree-sitter-ebnf-generator`) can convert our extracted EBNF directly into a `grammar.js` boilerplate (sequences `seq()`, alternatives `choice()`, loops `repeat()`).
+| EBNF maps structurally to Tree-sitter DSL.
+A transpiler script (`tree-sitter-ebnf-generator`) can convert our extracted EBNF directly into a `grammar.js` boilerplate (sequences `seq()`, alternatives `choice()`, loops `repeat()`).
 
 | *GitHub & GitLab*
 | GitHub Linguist (originally TextMate regex, migrating to Tree-sitter).
-| When you register Zeylan in GitHub's Linguist, you point to our compiler-generated Tree-sitter or TextMate repository. This guarantees syntax highlighting on pull requests and code search works out of the box.
+| When you register Zeylan in GitHub's Linguist, you point to our compiler-generated Tree-sitter or TextMate repository.
+This guarantees syntax highlighting on pull requests and code search works out of the box.
 
 | *TextMate & Sublime* +
 (VS Code, TextMate, Sublime)
@@ -174,7 +197,8 @@ We can reuse the compiler's EBNF annotations to automate the maintenance of synt
 
 | *CodeMirror (v6)*
 | Lezer parser generator (`.grammar` file compiled to JS).
-| Lezer's notation is a direct derivative of EBNF (choice `\|`, loops `*`/`+`, optional `?`). The compiler toolchain can translate Zeylan EBNF rules into Lezer rule blocks (`Rule { expression* }`) to power web-based editors.
+| Lezer's notation is a direct derivative of EBNF (choice `\|`, loops `*`/`+`, optional `?`).
+The compiler toolchain can translate Zeylan EBNF rules into Lezer rule blocks (`Rule { expression* }`) to power web-based editors.
 |===
 
 * *Semantic Highlighting via LSP*: Because the compiler frontend maintains clean side-tables of resolved names and types mapped by `NodeId`, the Language Server (LSP) can query these tables to emit precise Semantic Tokens to the editor (e.g., distinguishing custom Type names from variables).
@@ -185,13 +209,20 @@ We can reuse the compiler's EBNF annotations to automate the maintenance of synt
 When writing compiler code during the bootstrap phase, always ask:
 
 1. *“Does this parser class import `com.oracle.truffle...`?”*
-   * _Answer must be NO._ Only target generator classes under the backend translator package are allowed to touch Truffle APIs.
+   * _Answer must be NO._
+   Only target generator classes under the backend translator package are allowed to touch Truffle APIs.
 2. *“Am I resolving names or verifying types inside Truffle's `@Specialization`?”*
-   * _Answer must be NO._ Type checking and name resolution are static. They must happen in the compiler frontend. Truffle specializations are strictly for runtime type optimizations.
+   * _Answer must be NO._
+   Type checking and name resolution are static.
+   They must happen in the compiler frontend.
+   Truffle specializations are strictly for runtime type optimizations.
 3. *“Are my AST nodes mutating?”*
-   * _Answer must be NO._ Once the parser finishes, AST nodes are read-only. Use side-tables for semantic variables.
+   * _Answer must be NO._
+   Once the parser finishes, AST nodes are read-only.
+   Use side-tables for semantic variables.
 4. *“Am I using complex JVM libraries that make self-hosting in Zeylan difficult?”*
-   * _Answer must be NO._ Rely on simple language features, sealed types, and record structures.
+   * _Answer must be NO._
+   Rely on simple language features, sealed types, and record structures.
 
 
 

@@ -4,6 +4,7 @@
 This tutorial guides you step-by-step through installing Zeylan, writing your first `pure` functions, and compiling a program.
 
 == Prerequisites
+
 * JDK 26 or GraalVM 26+ installed.
 
 == Writing Hello World

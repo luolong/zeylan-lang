@@ -8,7 +8,8 @@
 == Background & Problem Statement
 
 Ecosystem fragmentation across runtime targets is a notorious challenge for multi-backend compilers. 
-In Ceylon, this manifested as a split in the module system. Because modules imported concrete target-specific implementations (e.g., a JVM file I/O dependency versus a JS file I/O dependency), compiling a module for both platforms required:
+In Ceylon, this manifested as a split in the module system.
+Because modules imported concrete target-specific implementations (e.g., a JVM file I/O dependency versus a JS file I/O dependency), compiling a module for both platforms required:
 
 1. Heavy conditional compilation flags.
 2. Platform-specific target annotations (such as `native("jvm")` and `native("js")`).
@@ -22,6 +23,7 @@ We propose evolving Zeylan's algebraic effect capability type system to govern *
 Instead of a module declaring dependencies on platform-specific libraries, it declares requirements for abstract **system capabilities** and conditional target bounds using declarative syntax.
 
 The proposal consists of three core components:
+
 1. **Target-conditioned imports** using the `given` keyword.
 2. **Interface modules** that declare purely abstract capability contracts.
 3. **Platform wrapper declarations** in the module manifest to cleanly import and sandbox external native modules (NPM, Maven, etc.).
@@ -30,7 +32,8 @@ The proposal consists of three core components:
 
 == 1. Declarative Target Constraints via `given`
 
-To avoid introducing imperative `if-then-else` syntax into declarative module manifests, we reuse the `given` keyword. This enables package managers and compilers to statically resolve target-conditional trees.
+To avoid introducing imperative `if-then-else` syntax into declarative module manifests, we reuse the `given` keyword.
+This enables package managers and compilers to statically resolve target-conditional trees.
 
 [source,zeylan]
 ----
@@ -47,7 +50,8 @@ The compiler/package manager builds a unified dependency graph but prunes branch
 
 === Set-Theoretic Type Algebra in `given` Constraints
 
-Because Zeylan's type system is built on mathematical set theory, the constraint expression in a `given` clause is not limited to single capability names. It can contain a **full type algebra expression** using unions (`|`), intersections (`&`), and relative complements (`\`).
+Because Zeylan's type system is built on mathematical set theory, the constraint expression in a `given` clause is not limited to single capability names.
+It can contain a **full type algebra expression** using unions (`|`), intersections (`&`), and relative complements (`\`).
 
 [source,zeylan]
 ----
@@ -71,13 +75,16 @@ To avoid syntax overloading with `given` (which is traditionally reserved for ge
 
 To minimize annotation boilerplate, when a declaration is guarded by a platform capability via `with(...)`, it **implicitly declares that it performs those capabilities** as runtime effects.
 
-* **`performs FileSystem` (Pure Runtime Effect):** Used when a function is platform-agnostic but requires a filesystem capability to be provided/handled at runtime. It compiles on all targets.
-* **`with(FileSystem)` (Unified Constraint & Effect):** The function is only compiled if the target platform natively supports `FileSystem`, and it implicitly acts as if it has `performs FileSystem`. Any caller must handle the `FileSystem` effect or propagate it upstream.
+* **`performs FileSystem` (Pure Runtime Effect):** Used when a function is platform-agnostic but requires a filesystem capability to be provided/handled at runtime.
+It compiles on all targets.
+* **`with(FileSystem)` (Unified Constraint & Effect):** The function is only compiled if the target platform natively supports `FileSystem`, and it implicitly acts as if it has `performs FileSystem`.
+Any caller must handle the `FileSystem` effect or propagate it upstream.
 
 **Compiler Validation Rules:**
 To prevent accidental or redundant platform-locking, **it is a compile-time error to declare a function or method with a `with(Capability)` guard if it does not perform operations using the capability directly, or call other methods/functions that themselves declare the required capability.**
 
 For platform and CPU architecture capabilities, a function is verified as "using" the capability if it:
+
 1. **Invokes Compiler Intrinsics:** Calls platform-specific assembly/compiler intrinsics (e.g. calling `neon_add(...)`, which itself declares `with(AArch64)`).
 2. **Invokes Restricted APIs:** Calls external system APIs or libraries that are guarded by the same capability (e.g. calling a Win32 binding that declares `with(Windows)` satisfies the check in a `with(Windows & X86_64)` function).
 3. **References Restricted Types/Symbols:** Accesses types, constants, or classes defined in modules/packages that require that capability.
@@ -104,9 +111,13 @@ shared Float calculateTax(Float amount, Float rate) {
 
 ==== Conditional Declarations & Implicit Pattern Matching
 
-You can guard entire function, class, or interface declarations by prefixing them with an annotation-like `with(...)` clause. This provides immediate visual visibility, avoids parsing ambiguity, and automatically handles effect propagation. If the target compilation environment does not satisfy the capability constraint, the compiler completely ignores the declaration for that build.
+You can guard entire function, class, or interface declarations by prefixing them with an annotation-like `with(...)` clause.
+This provides immediate visual visibility, avoids parsing ambiguity, and automatically handles effect propagation.
+If the target compilation environment does not satisfy the capability constraint, the compiler completely ignores the declaration for that build.
 
-Importantly, the `with(...)` guard acts as an **implicit compile-time pattern matching dispatcher**. Declarations in the same scope can share the **exact same name** if they are guarded by different, mutually exclusive capability constraints. The compiler automatically dispatches to and compiles the implementation that matches the active target platform capabilities.
+Importantly, the `with(...)` guard acts as an **implicit compile-time pattern matching dispatcher**.
+Declarations in the same scope can share the **exact same name** if they are guarded by different, mutually exclusive capability constraints.
+The compiler automatically dispatches to and compiles the implementation that matches the active target platform capabilities.
 
 [source,zeylan]
 ----
@@ -128,7 +139,8 @@ shared void executeCommand(String cmd) {
 }
 ----
 
-This allows clean, target-specific overloading under a single identifier. If the target platform does not match any of the `with(...)` guarded versions, the compiler automatically falls back to the unguarded version, eliminating target suffixes (like `executeCommandJvm`) or manual factory routing.
+This allows clean, target-specific overloading under a single identifier.
+If the target platform does not match any of the `with(...)` guarded versions, the compiler automatically falls back to the unguarded version, eliminating target suffixes (like `executeCommandJvm`) or manual factory routing.
 
 ==== Platform & CPU Architecture Capabilities
 
@@ -163,7 +175,8 @@ shared void fastVectorAdd(Float[] a, Float[] b) {
 ----
 
 ==== Conditional Code Blocks (Static Branch Pruning)
-Inside function bodies, you can use a `with` block to branch conditionally on target platform capabilities. The compiler prunes the inactive branches during compilation, preventing unresolved symbol errors for platform-specific APIs.
+Inside function bodies, you can use a `with` block to branch conditionally on target platform capabilities.
+The compiler prunes the inactive branches during compilation, preventing unresolved symbol errors for platform-specific APIs.
 
 [source,zeylan]
 ----
@@ -190,7 +203,8 @@ This unifies compile-time conditional compilation (similar to Rust's `#[cfg]`) w
 
 == 2. Interface Modules (Abstract API Contracts)
 
-The most robust architectural pattern is to decouple the API design completely from the implementation. An `interface module` contains only abstract capabilities and type definitions with zero implementation code or platform bindings.
+The most robust architectural pattern is to decouple the API design completely from the implementation.
+An `interface module` contains only abstract capabilities and type definitions with zero implementation code or platform bindings.
 
 [source,zeylan]
 ----
@@ -220,6 +234,7 @@ module my.app "1.0.0" {
 To eliminate boilerplate FFI wrapper code, the module manifest itself can declare that it directly wraps an external native package (such as an npm package or Maven artifact).
 
 The wrapper module specifies:
+
 1. The external package coordinate (`wraps`).
 2. The exposed API bindings (`shares`).
 3. The platform capability requirement (`requires capability`).
@@ -255,6 +270,7 @@ module jspm.xstream "1.0.0" {
 1. **Resolution:** When target compiling, the package manager fetches the required platform dependencies (e.g. downloads the npm package).
 2. **Type Checking:** The compiler generates virtual symbol headers based on the wrapper's `shares` block, ensuring compile-time type-safety in standard Zeylan code.
 3. **Execution/Target Linking:**
+
    * For JS/TS target compilation, the compiler generates standard native imports (e.g. `import { create } from 'xstream'`) and handles parameter translation automatically.
    * If target compilation is invoked for a target that doesn't satisfy `TypeScriptRuntime` (such as JVM), the compiler fails early at the module resolution step before generating broken binaries.
 
@@ -265,4 +281,5 @@ module jspm.xstream "1.0.0" {
 To ensure third-party wrapped modules cannot bypass Zeylan's sandboxing guarantees:
 * Direct integration with host libraries performs a special **`UnsafeNative`** effect.
 * The module manifest must declare `allows effect UnsafeNative`.
-* The package registry and user configuration can audit this permission. Standard application modules are prohibited from performing `UnsafeNative` directly, enforcing security boundaries at the module level.
+* The package registry and user configuration can audit this permission.
+Standard application modules are prohibited from performing `UnsafeNative` directly, enforcing security boundaries at the module level.

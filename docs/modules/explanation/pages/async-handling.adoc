@@ -4,16 +4,20 @@
 
 [NOTE]
 ====
-*Document Type:* Design Proposal. This document details conceptual programming primitives, interfaces, and patterns for asynchronous execution in Zeylan, rather than a finalized implementation specification.
+*Document Type:* Design Proposal.
+This document details conceptual programming primitives, interfaces, and patterns for asynchronous execution in Zeylan, rather than a finalized implementation specification.
 ====
 
-This document analyzes a candidate architectural proposal for asynchronous programming in Zeylan, a spiritual successor to Ceylon. It demonstrates how asynchronous execution can be modeled purely via algebraic effects, bypassing traditional syntax compromises.
+This document analyzes a candidate architectural proposal for asynchronous programming in Zeylan, a spiritual successor to Ceylon.
+It demonstrates how asynchronous execution can be modeled purely via algebraic effects, bypassing traditional syntax compromises.
 
 == 1. Domain & Core Paradigm
 
 * *Language Context:* Zeylan utilizes a set-theoretic type system ($A \mid B$, $A \ \& \ B$) with first-class, row-polymorphic algebraic effect handlers.
-* *Core Philosophy:* Asynchrony is *not* a language keyword (`async`/`await`), nor does it alter function return types (`T` remains `T`, not `Promise<T>`). Instead, asynchrony is modeled strictly as an *ambient capability interface* (`Async`) managed via delimited continuations and fiber dispatch.
-* *Elimination of "Function Coloring":* There is no distinction between synchronous and asynchronous functions in their signatures. A function requiring non-blocking execution simply includes `Async` in its effect row (e.g. `performs Async | Network`).
+* *Core Philosophy:* Asynchrony is *not* a language keyword (`async`/`await`), nor does it alter function return types (`T` remains `T`, not `Promise<T>`).
+Instead, asynchrony is modeled strictly as an *ambient capability interface* (`Async`) managed via delimited continuations and fiber dispatch.
+* *Elimination of "Function Coloring":* There is no distinction between synchronous and asynchronous functions in their signatures.
+A function requiring non-blocking execution simply includes `Async` in its effect row (e.g. `performs Async | Network`).
 
 ---
 
@@ -33,7 +37,8 @@ shared interface Async {
 === Execution Mechanics (Under the Hood)
 
 * *Suspension:* When a non-blocking operation suspends (e.g., IO wait or `sleep`), the runtime captures the execution stack as a *delimited continuation* (`Continuation<T>`).
-* *Event Loop Integration:* The continuation token is registered with an OS-level event loop (`io_uring`, `epoll`, `kqueue`, or virtual clock). The current native OS thread is freed immediately.
+* *Event Loop Integration:* The continuation token is registered with an OS-level event loop (`io_uring`, `epoll`, `kqueue`, or virtual clock).
+The current native OS thread is freed immediately.
 * *Resumption:* Upon completion of the IO event, the event loop schedules `continuation.resume(value)`, placing the fiber back onto the execution queue.
 
 ---
@@ -48,7 +53,8 @@ While the underlying engine operates on continuation handlers, Zeylan provides l
 
 | `fork expr`
 | `Async.fork(() => expr)`
-| Spawns a lightweight concurrent fiber. Returns `Fiber<T>`.
+| Spawns a lightweight concurrent fiber.
+Returns `Fiber<T>`.
 
 | `fiber.await()`
 | `Async.await(fiber)`
@@ -87,7 +93,8 @@ shared DashboardOverview loadDashboard(String userId)
 
 === Pattern B: Timeouts, Retries, and Fault Tolerance
 
-Because `Async` is an algebraic effect, behavior modifications (timeouts, retries, circuit breakers) do not require wrapping promises or rewriting business logic. They are applied externally via *handler decorators*:
+Because `Async` is an algebraic effect, behavior modifications (timeouts, retries, circuit breakers) do not require wrapping promises or rewriting business logic.
+They are applied externally via *handler decorators*:
 
 [source,zeylan]
 ----
@@ -114,7 +121,8 @@ value winner = select {
 
 === Pattern D: Async Streaming (Channels)
 
-Multi-value asynchronous responses (WebSockets, SSE, DB cursors) do not use complex reactive streams (RxJS/Observables). They consume `Channel<T>` via standard loops, where each iteration suspends fiber execution until the next chunk arrives:
+Multi-value asynchronous responses (WebSockets, SSE, DB cursors) do not use complex reactive streams (RxJS/Observables).
+They consume `Channel<T>` via standard loops, where each iteration suspends fiber execution until the next chunk arrives:
 
 [source,zeylan]
 ----

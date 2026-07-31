@@ -4,7 +4,8 @@
 
 [NOTE]
 ====
-*Document Type:* Position Paper. This document outlines a conceptual vision and design philosophy for decoupling business logic boundaries and execution topologies in Zeylan, rather than a finalized implementation specification.
+*Document Type:* Position Paper.
+This document outlines a conceptual vision and design philosophy for decoupling business logic boundaries and execution topologies in Zeylan, rather than a finalized implementation specification.
 ====
 
 Modern enterprise architectures have settled on two primary styles for structuring large systems:
@@ -27,6 +28,7 @@ A developer in the `Billing` package can easily import and query the `UserReposi
 In Zeylan, this is prevented by the **Capability-Based Module System** (see [Capability-Based Modules RFC](file:///Users/rolandtepp/Developer/luolong/zeylan-lang/docs/modules/rfcs/pages/capability-based-modules.adoc)).
 
 Capabilities (effects) are governed at the module boundary:
+
 *   The `user.domain` module exposes the `UserService` capability, and only `user.domain` is granted permission to perform `Database` effects.
 *   The `billing.domain` module declares that it requires `UserService` but does **not** permit direct `Database` capability.
 *   If a developer in the `billing.domain` module attempts to perform a database write or access a DB client, the compiler fails immediately, enforcing strict modular database isolation at compile-time.
@@ -56,25 +58,30 @@ Calling a service is simply invoking an abstract capability.
 The deployment environment determines how the capability is handled:
 
 === Step 1: Define the Abstract Capability
-```zeylan
+
+[source,zeylan]
+----
 shared interface UserService {
     shared formal User getUser(String id);
 }
-```
+----
 
 === Step 2: Write the Business Logic
+
 The calling code simply declares that it performs `UserService`:
-```zeylan
+
+[source,zeylan]
+----
 void processCheckout(String itemId, String userId) performs UserService | PaymentService {
     value user = UserService.getUser(userId);
     PaymentService.charge(user.billingInfo, itemId);
 }
-```
+----
 
 === Step 3: Swap Handlers Based on Deployment Topology
 
 #### Topology A: Running as a Modular Monolith (Modulith)
-In-memory deployment requires no serialization or network boundaries.
+
 The framework binds the capability to the local database-backed implementation:
 
 [source,zeylan]
@@ -97,6 +104,7 @@ void dispatchLocalRequest(Request req) {
 ----
 
 #### Topology B: Running as Distributed Microservices
+
 If the `user.domain` service is split into a separate physical microservice, the business logic (`processCheckout`) remains **completely untouched**.
 The framework simply binds the `UserService` capability to a remote RPC handler:
 
@@ -137,7 +145,8 @@ Because of this type mismatch, you cannot swap a local implementation for a remo
 In Zeylan, algebraic effects unify synchronous and asynchronous execution.
 The signature `User getUser(String id)` does not contain any async wrappers.
 *   **Synchronous Execution:** In the modular monolith, the handler executes in-process and returns the `User` value immediately.
-*   **Asynchronous Execution:** In the microservice deployment, the network operations perform the `Async` capability. Under the hood, the runtime handles `Async` by capturing the execution's delimited continuation, suspending the current fiber, and registering it with the network event loop to be resumed when network data arrives.
+*   **Asynchronous Execution:** In the microservice deployment, the network operations perform the `Async` capability.
+Under the hood, the runtime handles `Async` by capturing the execution's delimited continuation, suspending the current fiber, and registering it with the network event loop to be resumed when network data arrives.
 
 Here is how the framework router binds the proposed `Async` capability handler at the system boundary:
 
@@ -155,7 +164,9 @@ void dispatchRemoteRequest(Request req) {
 }
 ----
 
-The developer writes simple, direct blocking-style code, while the runtime runs it fully asynchronously. For a deep dive into the primitives and ergonomics of this model, see xref:async-handling.adoc[Async Handling under Algebraic Effects].
+The developer writes simple, direct blocking-style code, while the runtime runs it fully asynchronously.
+For a deep dive into the primitives and ergonomics of this model, see xref:async-handling.adoc[Async Handling under Algebraic Effects].
+
 This unification is what makes complete transport-agnostic local/remote duality possible.
 
 ---
@@ -166,6 +177,7 @@ In distributed microservices, propagating request-scoped context (such as transa
 Typically, developers rely on tracing sidecars or custom HTTP interceptors.
 
 Because Zeylan's algebraic effects naturally capture continuations and capability bindings:
+
 *   **Locally (Modulith):** The framework-scoped context (e.g. `SecurityContext`) is preserved across threads and asynchronous boundaries automatically, avoiding fragile `ThreadLocal` variables.
 *   **Remotely (Microservices):** When the `RemoteUserService` capability handler makes an HTTP call, the handler intercepts the current tracing context effect and serializes it into the outgoing HTTP request headers automatically.
 

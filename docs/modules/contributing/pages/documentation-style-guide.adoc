@@ -1,0 +1,70 @@
+= Documentation Style Guide
+:navtitle: Documentation Style
+
+To keep the project's documentation clean, readable, and easy to maintain, we follow Asciidoctor's recommended practices.
+Please adhere to the following rules when writing or modifying documentation pages.
+
+== Core Rules
+
+=== 1. Put Each Sentence on its Own Line
+We use **Semantic Line Wrapping** (also known as ventilated prose).
+Instead of wrapping paragraphs at a fixed column width or writing long lines containing multiple sentences, start each separate sentence on its own line.
+
+**Why?**
+* **Cleaner Diffs:** A simple typo fix or change in one sentence won't cause the entire paragraph to be reflowed in git history.
+This makes git diffs extremely precise and easy to review.
+* **Refining Text:** It is easier to swap, comment out, or rearrange sentences when each sentence is on its own line.
+* **Sentence Length Control:** Writing in this style makes it instantly obvious if a sentence is too long or run-on.
+
+**Example:**
+[source,asciidoc]
+----
+This is the first sentence.
+This is the second sentence on a new line.
+Notice how both belong to the same paragraph, but are written on separate lines.
+----
+
+=== 2. Separate Lists and Titles with Blank Lines
+To ensure proper HTML/PDF rendering and parsing by Asciidoctor:
+* **Section Titles:** Always place at least one blank line before and after section titles.
+* **List Blocks:** Always place at least one blank line before and after a list block.
+Do not run list items directly into surrounding paragraphs.
+
+**Example:**
+[source,asciidoc]
+----
+== Correct Title Spacing
+
+Here is a paragraph of text.
+
+* First list item
+* Second list item
+
+Another paragraph of text.
+----
+
+=== 3. Use Atx-Style Section Titles
+Always use Atx-style headings using the `=` symbol.
+Do not use Setext-style underlines (using dashes or tildes).
+
+**Example:**
+[source,asciidoc]
+----
+= Document Title (Level 0)
+== Section Title (Level 1)
+=== Subsection Title (Level 2)
+----
+
+=== 4. Use Minimal Delimiters
+When creating delimited blocks (such as source code, admonitions, or tables), use the minimum number of characters required (typically four) and keep them consistent.
+
+**Example:**
+[source,asciidoc]
+----
+[source,zeylan]
+----
+void hello() {
+    print("Hello");
+}
+----
+----

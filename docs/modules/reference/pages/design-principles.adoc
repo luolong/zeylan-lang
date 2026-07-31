@@ -1,7 +1,8 @@
 = Language Design Principles
 :navtitle: Design Principles
 
-Zeylan is built with a strong focus on developer ergonomics, static verification, and code readability. A cornerstone of the language's philosophy is the preference for complete words over arbitrary abbreviations.
+Zeylan is built with a strong focus on developer ergonomics, static verification, and code readability.
+A cornerstone of the language's philosophy is the preference for complete words over arbitrary abbreviations.
 
 This document describes the core design principles of Zeylan and how they apply to both the language itself and the codebase implementing it.
 
@@ -12,12 +13,20 @@ This document describes the core design principles of Zeylan and how they apply 
 To maximize readability and maintainability, Zeylan establishes a strict rule: **avoid abbreviations in both keywords and identifiers**.
 
 === Rationale
-* **Code is Read More Than Written:** While shorthand like `fn`, `val`, or `pub` saves a few keystrokes during initial coding, it increases cognitive load during reading and review. Complete words read naturally and flow like prose.
-* **Elimination of Arbitrary Mappings:** Abbreviations are often non-standard across ecosystems (e.g., is it `fn`, `fun`, `func`, or `def`? Is it `val`, `let`, `var`, or `const`?). Using complete words makes the language intuitive and eliminates arbitrary naming rules.
-* **Prose-like Flow:** Keywords and library APIs should align with standard English structure to make the code self-documenting.
+
+* **Code is Read More Than Written:**
+While shorthand like `fn`, `val`, or `pub` saves a few keystrokes during initial coding, it increases cognitive load during reading and review.
+Complete words read naturally and flow like prose.
+* **Elimination of Arbitrary Mappings:**
+Abbreviations are often non-standard across ecosystems (e.g., is it `fn`, `fun`, `func`, or `def`?
+Is it `val`, `let`, `var`, or `const`?).
+Using complete words makes the language intuitive and eliminates arbitrary naming rules.
+* **Prose-like Flow:**
+Keywords and library APIs should align with standard English structure to make the code self-documenting.
 
 === Application to Language Syntax (Keywords)
-All native keywords in Zeylan are complete English words. The table below compares Zeylan keywords against common abbreviations used in other languages:
+All native keywords in Zeylan are complete English words.
+The table below compares Zeylan keywords against common abbreviations used in other languages:
 
 [cols="1,2,2",options="header"]
 |===
@@ -50,6 +59,7 @@ All native keywords in Zeylan are complete English words. The table below compar
 
 === Application to Library APIs (Identifiers)
 The standard library (`std.*`) avoids abbreviating class, method, variable, and parameter names:
+
 * Use `duration` instead of `dur`
 * Use `continuation` instead of `cont`
 * Use `exception` instead of `ex`
@@ -57,9 +67,11 @@ The standard library (`std.*`) avoids abbreviating class, method, variable, and 
 * Use `message` instead of `msg`
 
 === Allowed Exceptions: Standard Acronyms
-The only exceptions to this principle are common technical, protocol, or standard acronyms. Spelling these out completely would be too cumbersome and would actually reduce clarity, since the abbreviated forms are universally understood and have zero or low chance of confusion.
+The only exceptions to this principle are common technical, protocol, or standard acronyms.
+Spelling these out completely would be too cumbersome and would actually reduce clarity, since the abbreviated forms are universally understood and have zero or low chance of confusion.
 
 Examples of allowed standard acronyms include:
+
 * Network Protocols & Formats: `TCP`, `UDP`, `HTTP`, `IP`
 * Data Formats & Encodings: `JSON`, `XML`, `UTF` (e.g., `UTF8`)
 * Time/Standards: `UTC`, `GMT`

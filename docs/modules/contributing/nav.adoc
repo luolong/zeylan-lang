@@ -1,3 +1,4 @@
 .Compiler Developer Guide
 * xref:dev-environment.adoc[Development Environment Setup]
 * xref:compiler-pipeline-internals.adoc[Compiler Pipeline Internals]
+* xref:documentation-style-guide.adoc[Documentation Style Guide]
