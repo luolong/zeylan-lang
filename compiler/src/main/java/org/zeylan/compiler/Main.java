@@ -8,11 +8,11 @@ public class Main {
 
     static void main(String[] args) {
         CommandLine cmd = new CommandLine(new ZeylanCommand());
-        cmd.setExecutionExceptionHandler((ex, commandLine, parseResult) -> {
+        cmd.setExecutionExceptionHandler((ex, _, _) -> {
             System.err.println(ex.getMessage());
             return Sysexits.EX_SOFTWARE;
         });
-        cmd.setParameterExceptionHandler((ex, args2) -> {
+        cmd.setParameterExceptionHandler((ex, _) -> {
             System.err.println(ex.getMessage());
             ex.getCommandLine().usage(System.err);
             return Sysexits.EX_USAGE;

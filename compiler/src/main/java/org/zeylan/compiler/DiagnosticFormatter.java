@@ -1,13 +1,98 @@
 package org.zeylan.compiler;
 
+import java.util.ArrayList;
+import java.util.function.Consumer;
+
 import org.jline.utils.AttributedString;
 import org.jline.utils.AttributedStringBuilder;
 import org.jline.utils.AttributedStyle;
 import org.jspecify.annotations.Nullable;
+import org.zeylan.compiler.util.Lists;
 
 public final class DiagnosticFormatter {
 
     public record LineCol(int line, int col) {}
+
+    public static void format(Diagnostic diagnostic, @Nullable CharSequence source, Consumer<AttributedString> consumer) {
+        var severity = diagnostic.severity();
+        var code = diagnostic.code();
+        var message = diagnostic.message();
+        var labels = diagnostic.labels();
+        var suggestions = diagnostic.suggestions();
+
+        consumer.accept(formatHeader(severity, code, message));
+
+        int lineNumWidth = 3;
+        var primaryLabel = Label.primary(labels).orElseGet(() -> Lists.head(labels));
+        if (primaryLabel != null) {
+            var span = primaryLabel.span();
+            String fileContent = null;
+            String[] sourceLines = null;
+            var filepathStr = "<repl>";
+
+            if (source != null) {
+                fileContent = source.toString();
+                filepathStr = span.filepath() != null ? span.filepath().toString() : "<repl>";
+            } else if (span.filepath() != null) {
+                try {
+                    fileContent = java.nio.file.Files.readString(span.filepath());
+                    filepathStr = span.filepath().toString();
+                } catch (java.io.IOException e) {
+                    // fallback
+                }
+            }
+
+            if (fileContent != null) {
+                sourceLines = fileContent.split("\\r?\\n", -1);
+
+                // Calculate max line number width to ensure perfect vertical bar alignment
+                int maxLineNum = 1;
+                for (var label : labels) {
+                    var loc = lineCol(fileContent, label.span().startOffset());
+                    if (loc.line() + 1 > maxLineNum) {
+                        maxLineNum = loc.line() + 1;
+                    }
+                }
+                lineNumWidth = Math.max(3, String.valueOf(maxLineNum).length());
+
+                var startLoc = lineCol(fileContent, span.startOffset());
+                consumer.accept(formatLocation(filepathStr, startLoc.line() + 1, startLoc.col() + 1, lineNumWidth));
+                consumer.accept(formatDivider(lineNumWidth));
+
+                var sortedLabels = new ArrayList<>(labels);
+                sortedLabels.sort((l1, l2) -> Integer.compare(l1.span().startOffset(), l2.span().startOffset()));
+
+                int lastLineIndex = -1;
+                for (var label : sortedLabels) {
+                    var labelSpan = label.span();
+                    var loc = lineCol(fileContent, labelSpan.startOffset());
+                    int lineIndex = loc.line();
+                    int colIndex = loc.col();
+
+                    if (lineIndex >= 0 && lineIndex < sourceLines.length) {
+                        var lineStr = sourceLines[lineIndex];
+
+                        if (lineIndex != lastLineIndex) {
+                            consumer.accept(formatSourceLine(lineIndex + 1, lineStr, lineNumWidth));
+                            lastLineIndex = lineIndex;
+                        }
+
+                        consumer.accept(formatAnnotation(lineNumWidth, colIndex, labelSpan.length(), label.message(), severity, label.isPrimary(), lineStr));
+                    }
+                }
+                consumer.accept(formatDivider(lineNumWidth));
+            } else {
+                filepathStr = span.filepath() != null ? span.filepath().toString() : "<anonymous>";
+                consumer.accept(formatLocation(filepathStr, span.line(), span.column(), lineNumWidth));
+            }
+        }
+
+        if (!suggestions.isEmpty()) {
+            for (var suggestion : suggestions) {
+                consumer.accept(formatSuggestion(suggestion, lineNumWidth));
+            }
+        }
+    }
 
     public static LineCol lineCol(String source, int startOffset) {
         int line = 0;
