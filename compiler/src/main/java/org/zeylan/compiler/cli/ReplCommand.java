@@ -19,8 +19,8 @@ import picocli.CommandLine.Command;
     mixinStandardHelpOptions = true
 )
 public final class ReplCommand implements Callable<Integer> {
-    final String prompt1 = "󰟆 zeylan\uE0B0 ";
-    final String prompt2 = "󰟆    ...\uE0B0 ";
+    final String prompt1 = "\u0001\u001B[30;44m\u0002 󰟆 zeylan\u0001\u001B[0;34m\u0002\uE0B0\u0001\u001B[0m\u0002 ";
+    final String prompt2 = "\u0001\u001B[30;44m\u0002 󰟆    ...\u0001\u001B[0;34m\u0002\uE0B0\u0001\u001B[0m\u0002 ";
 
     @Override
     public Integer call() {
