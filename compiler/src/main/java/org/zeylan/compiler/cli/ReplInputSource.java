@@ -2,17 +2,12 @@ package org.zeylan.compiler.cli;
 
 import org.zeylan.compiler.Source;
 
-public class ReplInputSource implements Source.AnonymousSource, Appendable {
+public class ReplInputSource extends Source.AnonymousSource implements Appendable {
     private final StringBuilder content = new StringBuilder();
 
     @Override
-    public CharSequence content() {
+    protected CharSequence content() {
         return content;
-    }
-
-    @Override
-    public String toString() {
-        return content.toString();
     }
 
     @Override

@@ -18,32 +18,33 @@ public record Diagnostic(
         List<Label> labels,
         List<String> suggestions) {
 
-
-
     public enum Code {
         /// Marker exception for pieces of code that are not implemented yet.
         NotImplemented("ZSC0000"),
 
         /// File not found.
-        IoFileNotFound("ZSC0010");
+        IoFileNotFound("ZSC0010"),
+
+        /// Unexpected character while scanning the source
+        ScannerUnexpectedCharacter("ZSC0100");
 
         Code(String code) {
             this.code = code;
         }
 
         private final String code;
+
         public String code() {
             return code;
         }
     }
-
     public enum Severity {
         ERROR,
         WARNING,
         NOTE,
         INFO;
-    }
 
+    }
     public static Diagnostic notImplemented(SourceSpan sourceSpan, String message) {
         return new Diagnostic(
                 Code.NotImplemented,
@@ -72,6 +73,16 @@ public record Diagnostic(
                 Objects.requireNonNull(exception.getMessage()),
                 List.of(new Label(new SourceSpan(path, 0, 0, 0, 0), "File not found", true)),
                 List.of());
+    }
+
+    public static Diagnostic unexpectedCharacter(SourceSpan span, String message) {
+        return new Diagnostic(
+                Code.ScannerUnexpectedCharacter,
+                Severity.ERROR,
+                "Unexpected character",
+                List.of(new Label(span, message, true)),
+                List.of()
+        );
     }
 
 }

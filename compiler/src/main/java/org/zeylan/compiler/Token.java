@@ -1,9 +1,11 @@
 package org.zeylan.compiler;
 
+import org.jspecify.annotations.Nullable;
+
 public record Token(
         TokenType type,
         String lexeme,
-        Object literal,
+        @Nullable Object literal,
         int line,
         int column,
         int startOffset,
