@@ -1,16 +1,16 @@
 = Language Design Principles
 :navtitle: Design Principles
 
-Zeylan is built with a strong focus on developer ergonomics, static verification, and code readability.
+Bourbon is built with a strong focus on developer ergonomics, static verification, and code readability.
 A cornerstone of the language's philosophy is the preference for complete words over arbitrary abbreviations.
 
-This document describes the core design principles of Zeylan and how they apply to both the language itself and the codebase implementing it.
+This document describes the core design principles of Bourbon and how they apply to both the language itself and the codebase implementing it.
 
 ---
 
 == 1. Complete English Words over Abbreviations
 
-To maximize readability and maintainability, Zeylan establishes a strict rule: **avoid abbreviations in both keywords and identifiers**.
+To maximize readability and maintainability, Bourbon establishes a strict rule: **avoid abbreviations in both keywords and identifiers**.
 
 === Rationale
 
@@ -25,12 +25,12 @@ Using complete words makes the language intuitive and eliminates arbitrary namin
 Keywords and library APIs should align with standard English structure to make the code self-documenting.
 
 === Application to Language Syntax (Keywords)
-All native keywords in Zeylan are complete English words.
-The table below compares Zeylan keywords against common abbreviations used in other languages:
+All native keywords in Bourbon are complete English words.
+The table below compares Bourbon keywords against common abbreviations used in other languages:
 
 [cols="1,2,2",options="header"]
 |===
-| Concept | Other Languages | Zeylan Keyword
+| Concept | Other Languages | Bourbon Keyword
 
 | Variable Declaration
 | `val`, `let`, `var`
@@ -111,4 +111,4 @@ When contributing to the bootstrap compiler, developers must use full words for 
 | `List<Node> expressions`
 |===
 
-By enforcing this naming convention inside the compiler codebase, we ensure that the compiler's own development environment is as clean, readable, and self-documenting as the code written in Zeylan.
+By enforcing this naming convention inside the compiler codebase, we ensure that the compiler's own development environment is as clean, readable, and self-documenting as the code written in Bourbon.

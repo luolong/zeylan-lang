@@ -1,7 +1,7 @@
 = Compiler Developer Setup
 :navtitle: Dev Environment
 
-How to set up Java 25, GraalVM, and Bazel for contributing to the Zeylan compiler.
+How to set up Java 25, GraalVM, and Bazel for contributing to the Bourbon compiler.
 
 == Requirements
 
@@ -14,11 +14,11 @@ We use `mise` to manage development tools and versions (like Bazel and Java). To
 
 === Build the Native Compiler
 
-To build the standalone native compiler binary `zeylan`:
+To build the standalone native compiler binary `bourbon`:
 
 [source,shell]
 ----
-mise exec -- bazel build //compiler:zeylan
+mise exec -- bazel build //compiler:bourbon
 ----
 
 === Run the Compiler (Native)
@@ -27,14 +27,14 @@ To run the native compiler and see its CLI options:
 
 [source,shell]
 ----
-mise run zeylan --help
+mise run bourbon --help
 ----
 
 To run the native compiler REPL session:
 
 [source,shell]
 ----
-mise run zeylan
+mise run bourbon
 ----
 
 === Run the Compiler (JVM-based)
@@ -45,14 +45,14 @@ To see CLI options:
 
 [source,shell]
 ----
-mise run zeylan-jvm --help
+mise run bourbon-jvm --help
 ----
 
 To launch the JVM REPL session:
 
 [source,shell]
 ----
-mise run zeylan-jvm
+mise run bourbon-jvm
 ----
 
 NOTE: Direct `bazel run` executions of interactive CLI commands (like the REPL) can fail or lose TTY support due to Bazel's run sandbox environment. Always use `mise run` commands to compile with Bazel and run directly on the host.

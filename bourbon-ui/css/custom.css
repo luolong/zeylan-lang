@@ -1,0 +1,472 @@
+/*
+ * Bourbon Language Branding & Stylesheet Overrides
+ * Sourced from the Bourbon Branding & Documentation Style Guide.
+ * Implements a warm, low-eye-strain "cacao, honey, and cream" design system.
+ * Incorporates brand-accurate typography pairings (Orbitron, Montserrat, Lora).
+ * Formatted with modern, native nested CSS blocks for readability and structure.
+ */
+
+:root {
+  /* Font Families */
+  --font-family-body: 'Lora', Georgia, 'Times New Roman', serif;
+  --font-family-title: 'Orbitron', sans-serif; /* Techno-sans matching "Bourbon" logotype */
+  --font-family-sans: 'Montserrat', sans-serif; /* Spaced geometric-sans matching "PROGRAMMING LANGUAGE" */
+  --font-family-mono: 'JetBrains Mono', 'Fira Code', monospace;
+
+  /* Light Mode Colors (Vanilla Cream & Honey) */
+  --color-canvas-bg: #FAF6EE;
+  --color-surface-bg: #FDFBF7;
+  --color-navbar-bg: #29180E; /* Deep Dark Espresso for a premium header */
+  --color-navbar-text: #FAF0E6;
+  --color-brand-primary: #D97706; /* Bourbon Amber */
+  --color-brand-secondary: #F59E0B; /* Golden Honey */
+  --color-text-primary: #29180E; /* Charcoal Espresso */
+  --color-text-secondary: #5C3A21; /* Toasted Cocoa */
+  --color-border: #E6DFD3;
+  --color-code-bg: #1F130A; /* Dark Cacao code blocks even in light mode */
+  --color-code-text: #FAF0E6;
+  --color-admonition-bg: #EBF3FC;
+  --color-admonition-border: #2563EB;
+}
+
+/* Global Reset & Core Canvas */
+body {
+  font-family: var(--font-family-body);
+  background-color: var(--color-canvas-bg);
+  color: var(--color-text-primary);
+  line-height: 1.7;
+}
+
+.body {
+  background-color: var(--color-canvas-bg);
+}
+
+/* Header & Navbar Nesting */
+.header {
+  .navbar {
+    background-color: var(--color-navbar-bg);
+    border-bottom: 2px solid var(--color-brand-primary);
+    font-family: var(--font-family-sans);
+
+    .navbar-brand {
+      .navbar-item {
+        font-family: var(--font-family-title);
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.12em; /* High tracking to reflect the brand aesthetic */
+        color: var(--color-navbar-text) !important;
+        font-size: 1.15rem;
+
+        &:hover {
+          color: var(--color-brand-secondary) !important;
+        }
+      }
+    }
+
+    .navbar-end {
+      .navbar-item,
+      .navbar-link {
+        color: var(--color-navbar-text) !important;
+        font-family: var(--font-family-sans);
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+
+        &:hover {
+          background-color: rgba(255, 255, 255, 0.08) !important;
+          color: var(--color-brand-secondary) !important;
+        }
+      }
+    }
+  }
+}
+
+/* General Layout Accents (Montserrat font-family mapping) */
+.nav-container,
+.toc,
+.button,
+.breadcrumbs,
+.edit-this-page {
+  font-family: var(--font-family-sans);
+}
+
+/* Sidebar Navigation Menu Nesting */
+.nav-container {
+  background-color: var(--color-surface-bg);
+  border-right: 1px solid var(--color-border);
+
+  .nav-menu {
+    .title {
+      color: var(--color-text-primary);
+      font-family: var(--font-family-title);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      font-weight: 700;
+      font-size: 0.95rem;
+    }
+
+    .nav-link {
+      color: var(--color-text-secondary);
+      font-size: 0.9rem;
+
+      &:hover {
+        color: var(--color-brand-primary);
+        font-weight: 600;
+      }
+    }
+
+    .nav-item.is-current-page > .nav-link {
+      color: var(--color-brand-primary);
+      font-weight: 600;
+    }
+  }
+}
+
+/* Table of Contents (TOC) Nesting */
+.toc {
+  background-color: var(--color-surface-bg);
+  border-left: 1px solid var(--color-border);
+
+  .toc-menu {
+    color: var(--color-text-secondary);
+    font-size: 0.85rem;
+
+    & > .title {
+      font-family: var(--font-family-sans);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-weight: 700;
+      color: var(--color-text-primary);
+    }
+  }
+
+  a {
+    color: var(--color-brand-primary);
+    text-decoration: none;
+
+    &:hover {
+      color: var(--color-brand-secondary);
+      text-decoration: underline;
+    }
+
+    &.is-active {
+      color: var(--color-brand-primary) !important;
+      font-weight: 600;
+    }
+  }
+}
+
+/* Breadcrumbs & Toolbar Nesting */
+.toolbar {
+  background-color: var(--color-surface-bg);
+  border-bottom: 1px solid var(--color-border);
+
+  .breadcrumbs {
+    a {
+      color: var(--color-text-secondary);
+      font-size: 0.85rem;
+
+      &:hover {
+        color: var(--color-brand-primary);
+      }
+    }
+  }
+}
+
+/* 
+ * Main Document Content & Typography Nesting
+ */
+.doc {
+  /* Document Links */
+  a {
+    color: var(--color-brand-primary);
+    text-decoration: none;
+
+    &:hover {
+      color: var(--color-brand-secondary);
+      text-decoration: underline;
+    }
+  }
+
+  /* Document Headers */
+  h1, h1.page {
+    font-family: var(--font-family-title);
+    color: var(--color-text-primary);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 2.15rem;
+    margin-bottom: 1.5rem;
+  }
+
+  h2 {
+    font-family: var(--font-family-sans);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--color-text-primary);
+    border-bottom: 2px solid var(--color-border);
+    padding-bottom: 0.3em;
+    font-size: 1.45rem;
+    margin-top: 2rem;
+  }
+
+  h3 {
+    font-family: var(--font-family-sans);
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    color: var(--color-text-primary);
+    font-size: 1.2rem;
+    margin-top: 1.75rem;
+  }
+
+  h4 {
+    font-family: var(--font-family-sans);
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    font-size: 1.05rem;
+  }
+
+  /* Monospace & Inline Code Elements */
+  code, pre {
+    font-family: var(--font-family-mono) !important;
+  }
+
+  & :not(pre) > code {
+    background-color: rgba(217, 119, 6, 0.1);
+    color: #B45309;
+    padding: 0.2em 0.4em;
+    border-radius: 4px;
+    font-size: 0.9em;
+  }
+
+  /* Code Block Panels (Listing Blocks) */
+  .listingblock {
+    pre {
+      background-color: var(--color-code-bg) !important;
+      color: var(--color-code-text) !important;
+      border-radius: 8px;
+      border: 1px solid #3A2312;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      padding: 1.25rem !important;
+
+      code {
+        background-color: transparent !important;
+        color: inherit !important;
+        padding: 0 !important;
+      }
+    }
+
+    /* 
+     * Warm-Dark Syntax Highlighting Theme (Nested under .listingblock)
+     */
+    .hljs-comment,
+    .hljs-quote {
+      color: #9E7E6B !important; /* Muted roasted chicory */
+      font-style: italic !important;
+    }
+
+    .hljs-keyword,
+    .hljs-selector-tag {
+      color: #F59E0B !important; /* Golden Honey */
+      font-weight: 600 !important;
+    }
+
+    .hljs-type,
+    .hljs-class .hljs-title,
+    .hljs-attribute,
+    .hljs-name {
+      color: #FDBA74 !important; /* Soft warm peach */
+      font-weight: 600 !important;
+    }
+
+    .hljs-string,
+    .hljs-doctag {
+      color: #4ADE80 !important; /* Soft Leaf Green */
+    }
+
+    .hljs-number,
+    .hljs-literal {
+      color: #38BDF8 !important; /* Cool Sky Blue */
+    }
+
+    .hljs-title,
+    .hljs-function .hljs-title {
+      color: #FAF0E6 !important; /* Whipped Cream */
+      font-weight: 600 !important;
+    }
+
+    .hljs-built_in,
+    .hljs-builtin-name {
+      color: #FB7185 !important; /* Warm coral pink */
+    }
+
+    .hljs-symbol,
+    .hljs-bullet,
+    .hljs-operator {
+      color: #FAF0E6 !important;
+    }
+
+    .hljs-subst {
+      color: var(--color-code-text) !important;
+    }
+
+    .hljs-meta {
+      color: #9E7E6B !important;
+      font-weight: 600 !important;
+    }
+
+    .hljs-variable,
+    .hljs-template-variable {
+      color: #F43F5E !important;
+    }
+  }
+
+  /* 
+   * Admonition Blocks Nesting
+   */
+  .admonitionblock {
+    background-color: var(--color-admonition-bg) !important;
+    border-left: 6px solid var(--color-admonition-border) !important;
+    border-radius: 6px !important;
+    padding: 1.25rem !important;
+    margin: 1.5rem 0 !important;
+
+    /* Cell Overrides & Structural reset inside the table */
+    table, tr, td {
+      border: none !important;
+      background-color: transparent !important;
+    }
+
+    td.icon {
+      color: var(--color-admonition-border) !important;
+      font-weight: 700 !important;
+      text-transform: uppercase !important;
+      font-family: var(--font-family-sans) !important;
+      font-size: 0.85rem !important;
+      letter-spacing: 0.08em !important;
+      padding-right: 1.25rem !important;
+
+      /* Color the background badge icon to match the left border */
+      i {
+        background-color: var(--color-admonition-border) !important;
+        color: #FAF0E6 !important; /* Whipped Cream text */
+      }
+    }
+
+    td.content {
+      color: var(--color-text-secondary) !important;
+      font-size: 0.95rem !important;
+    }
+
+    /* Distinct Admonition Custom Theme variables */
+    &.note {
+      --color-admonition-bg: #F3EBE1; /* Toasted milk-tea / latte */
+      --color-admonition-border: #5C3A21; /* Toasted Cocoa */
+    }
+
+    &.tip {
+      --color-admonition-bg: #ECF2E4; /* Soft warm sage green */
+      --color-admonition-border: #4D7C0F; /* Olive green */
+    }
+
+    &.important {
+      --color-admonition-bg: #FCF0D2; /* Caramelized honey */
+      --color-admonition-border: #D97706; /* Bourbon Amber */
+    }
+
+    &.warning {
+      --color-admonition-bg: #FCEAE4; /* Soft warm copper / terracotta tint */
+      --color-admonition-border: #C2410C; /* Terracotta orange */
+    }
+
+    &.caution {
+      --color-admonition-bg: #F7E5EC; /* Plum-rose / burgundy-biscuit tint */
+      --color-admonition-border: #9D174D; /* Matured burgundy */
+    }
+  }
+
+  /* Table styles & alignments */
+  th, td {
+    border-color: var(--color-border);
+  }
+}
+
+/* Footer Nesting */
+footer.footer {
+  background-color: var(--color-navbar-bg);
+  color: #A18262;
+  border-top: 2px solid var(--color-brand-primary);
+  padding: 2.5rem;
+  font-family: var(--font-family-sans);
+  font-size: 0.85rem;
+
+  a {
+    color: var(--color-brand-secondary);
+  }
+}
+
+/*
+ * DARK MODE SUPPORT (Roasted Espresso & Gold)
+ * Nested overrides triggered seamlessly based on preferred color scheme
+ */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-canvas-bg: #120B05;
+    --color-surface-bg: #1F130A;
+    --color-navbar-bg: #0D0704;
+    --color-navbar-text: #FAF0E6;
+    --color-brand-primary: #F59E0B; /* Liquid Gold */
+    --color-brand-secondary: #B45309; /* Caramel */
+    --color-text-primary: #FAF0E6; /* Whipped Cream */
+    --color-text-secondary: #D4C2B3; /* Soft cream/gray */
+    --color-border: #3A2312;
+    --color-code-bg: #0D0704;
+    --color-code-text: #FAF0E6;
+  }
+
+  body {
+    background-color: var(--color-canvas-bg);
+    color: var(--color-text-primary);
+  }
+
+  .body {
+    background-color: var(--color-canvas-bg);
+  }
+
+  /* Dark mode specific elements */
+  .doc {
+    & :not(pre) > code {
+      background-color: rgba(245, 158, 11, 0.15);
+      color: #FBBF24;
+    }
+
+    /* Admonition Overrides for Dark Mode */
+    .admonitionblock {
+      &.note {
+        --color-admonition-bg: #1F1915; /* Very dark warm latte */
+        --color-admonition-border: #9E7E6B; /* Soft warm chicory tan */
+      }
+
+      &.tip {
+        --color-admonition-bg: #161C12; /* Very dark sage green */
+        --color-admonition-border: #84CC16; /* Bright olive/sage */
+      }
+
+      &.important {
+        --color-admonition-bg: #2C1E14; /* Very dark amber/caramel */
+        --color-admonition-border: #F59E0B; /* Liquid Gold */
+      }
+
+      &.warning {
+        --color-admonition-bg: #2D1611; /* Very dark copper */
+        --color-admonition-border: #F97316; /* Burnt orange */
+      }
+
+      &.caution {
+        --color-admonition-bg: #2E121C; /* Very dark burgundy/plum */
+        --color-admonition-border: #EC4899; /* Bright pink */
+      }
+    }
+  }
+}

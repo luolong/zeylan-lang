@@ -5,15 +5,15 @@
 [NOTE]
 ====
 *Document Type:* Design Proposal.
-This document details conceptual programming primitives, interfaces, and patterns for asynchronous execution in Zeylan, rather than a finalized implementation specification.
+This document details conceptual programming primitives, interfaces, and patterns for asynchronous execution in Bourbon, rather than a finalized implementation specification.
 ====
 
-This document analyzes a candidate architectural proposal for asynchronous programming in Zeylan, a spiritual successor to Ceylon.
+This document analyzes a candidate architectural proposal for asynchronous programming in Bourbon, a spiritual successor to Ceylon.
 It demonstrates how asynchronous execution can be modeled purely via algebraic effects, bypassing traditional syntax compromises.
 
 == 1. Domain & Core Paradigm
 
-* *Language Context:* Zeylan utilizes a set-theoretic type system ($A \mid B$, $A \ \& \ B$) with first-class, row-polymorphic algebraic effect handlers.
+* *Language Context:* Bourbon utilizes a set-theoretic type system ($A \mid B$, $A \ \& \ B$) with first-class, row-polymorphic algebraic effect handlers.
 * *Core Philosophy:* Asynchrony is *not* a language keyword (`async`/`await`), nor does it alter function return types (`T` remains `T`, not `Promise<T>`).
 Instead, asynchrony is modeled strictly as an *ambient capability interface* (`Async`) managed via delimited continuations and fiber dispatch.
 * *Elimination of "Function Coloring":* There is no distinction between synchronous and asynchronous functions in their signatures.
@@ -25,7 +25,7 @@ A function requiring non-blocking execution simply includes `Async` in its effec
 
 The `Async` capability interface (part of `std.async`) provides the low-level contracts for fiber manipulation and suspension:
 
-[source,zeylan]
+[source,bourbon]
 ----
 shared interface Async {
     shared formal T await<T>(Future<T> future);
@@ -45,7 +45,7 @@ The current native OS thread is freed immediately.
 
 == 3. Ergonomics & Syntactic Expressions
 
-While the underlying engine operates on continuation handlers, Zeylan provides lightweight syntactic sugar to eliminate boilerplate:
+While the underlying engine operates on continuation handlers, Bourbon provides lightweight syntactic sugar to eliminate boilerplate:
 
 [cols="1,2,2",options="header"]
 |===
@@ -75,7 +75,7 @@ Returns `Fiber<T>`.
 
 === Pattern A: Parallel Join / Structured Concurrency
 
-[source,zeylan]
+[source,bourbon]
 ----
 shared DashboardOverview loadDashboard(String userId) 
     performs Async | Network | Database {
@@ -96,7 +96,7 @@ shared DashboardOverview loadDashboard(String userId)
 Because `Async` is an algebraic effect, behavior modifications (timeouts, retries, circuit breakers) do not require wrapping promises or rewriting business logic.
 They are applied externally via *handler decorators*:
 
-[source,zeylan]
+[source,bourbon]
 ----
 // Wrap an async block with an explicit timeout handler
 value data = handle {
@@ -110,7 +110,7 @@ value data = handle {
 
 The `select` block evaluates multiple fibers concurrently, returns the result of the first fiber to complete, and automatically cancels remaining child continuations:
 
-[source,zeylan]
+[source,bourbon]
 ----
 value winner = select {
     res1 from f1 => res1,
@@ -124,7 +124,7 @@ value winner = select {
 Multi-value asynchronous responses (WebSockets, SSE, DB cursors) do not use complex reactive streams (RxJS/Observables).
 They consume `Channel<T>` via standard loops, where each iteration suspends fiber execution until the next chunk arrives:
 
-[source,zeylan]
+[source,bourbon]
 ----
 shared void streamPrices(String symbol) performs Async | Network | UI {
     value priceChannel = Network.streamPrices(symbol);
@@ -140,7 +140,7 @@ shared void streamPrices(String symbol) performs Async | Network | UI {
 
 [cols="1,2,2",options="header"]
 |===
-| Dimension | Traditional Model (Node/C#/Rust) | Zeylan Effect Model
+| Dimension | Traditional Model (Node/C#/Rust) | Bourbon Effect Model
 
 | *Type Overhead*
 | `Promise<T>` / `Task<T>` / `Future<T>` wrappers

@@ -1211,10 +1211,10 @@ aliases:["yml"],contains:l}}});const He=ae;for(const e of Object.keys(Ke)){
 const n=e.replace("grmr_","").replace("_","-");He.registerLanguage(n,Ke[e])}
 return He}()
 ;"object"==typeof exports&&"undefined"!=typeof module&&(module.exports=hljs);
-hljs.registerLanguage('zeylan', function(hljs) {
+hljs.registerLanguage('bourbon', function(hljs) {
   return {
-    name: 'Zeylan',
-    aliases: ['zeylan', 'ceylon'],
+    name: 'Bourbon',
+    aliases: ['bourbon', 'ceylon'],
     keywords: {
       keyword: 'shared void pure interface formal performs value object satisfies actual handle with of is if else given class return import module package for while try catch finally throw assert',
       type: 'String Integer Float Boolean List Map Set Result Option Void',

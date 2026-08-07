@@ -1,31 +1,252 @@
-= Documentation Style Guide
-:navtitle: Documentation Style
+= Bourbon Branding & Documentation Style Guide
+:navtitle: Style Guide
+:toc: left
+:toclevels: 3
+:icons: font
+:sectnums:
 
-To keep the project's documentation clean, readable, and easy to maintain, we follow Asciidoctor's recommended practices.
-Please adhere to the following rules when writing or modifying documentation pages.
+To keep the Bourbon Programming Language's identity, websites, and documentation clean, cohesive, and professional, we follow this comprehensive style guide.
+It serves as the definitive reference for both visual branding and written documentation.
 
-== Core Rules
+All contributors and documentation authors must adhere to these guidelines to ensure a premium, artisanal, and technically precise experience.
+
+---
+
+== The Bourbon Brand Story & Metaphor
+
+The name **Bourbon** represents rich warmth, careful maturation, deep focus, and natural craftsmanship.
+The language is designed to feel like an aged, exquisite spirit—smooth to write, yet built on exceptionally robust and mature computer science foundations.
+
+Our identity centers on the **Bourbon Vanilla Orchid** (represented in our logo), which embodies our core architectural values.
+
+=== 1. The Vanilla Orchid (Organic Complexity)
+The stylized five-petal orchid represents organic growth, structural clarity, and set-theoretic composition.
+Each petal is leaf-shaped with precise, clean lines, mirroring the elegant, natural syntax of Bourbon.
+The hand-pollinated and slow-matured nature of the vanilla orchid reflects our commitment to a carefully designed, deliberate language standard that prioritizes long-term stability and high-purity programming.
+
+=== 2. The Integrated Core: `(U)` and `B`
+At the heart of the orchid lies a stylized core of overlapping letters:
+* **The `(U)` Shape:** Represents **Union types** (`A | B`)—the fluid and flexible core of our set-theoretic type system.
+* **The `B` Shape:** Represents **Bisect and Intersection types** (`A & B` and complement `A \ B`)—the precise boundaries that slice through types to ensure absolute compile-time guarantees.
+
+Together, they form a symbiotic center, demonstrating how set-theoretic type algebra is seamlessly woven into the heart of the language.
+
+=== 3. The Hook/Stem (Encapsulation and Security)
+The stem of the orchid curves downwards to form a protective hook (reminiscent of a crook or a classic beverage umbrella):
+* **Encapsulation:** It represents containment and isolation—the physical boundaries of our zero-trust capability-based sandboxing model.
+* **Algebraic Effect Handling:** It evokes a "handle" or "umbrella," symbolizing how algebraic effects are safely captured, bound, and cleanly resolved by first-class handler scopes.
+
+---
+
+== Visual Design System & Theme
+
+Our visual identity is defined by a warm, organic, and premium aesthetic.
+It rejects sterile, cold tech blues and high-contrast blacks in favor of a warm, comforting, and deeply readable "cacao, honey, and cream" spectrum.
+
+=== 1. Color Palette
+
+The color system is divided into Light and Dark modes. Both modes must maintain an AAA contrast ratio for text readability while preserving the comforting warmth of the brand.
+
+==== Light Mode (Toasted Cream & Honey)
+Designed to feel like reading a high-quality print manual on heavy, textured cream paper.
+
+[cols="1,2,2,3", options="header"]
+|===
+| Role | Color Name | Hex / RGB / HSL | Usage / Application
+
+| **Primary Background**
+| Vanilla Cream
+| `#FAF6EE` +
+`rgb(250, 246, 238)` +
+`HSL(39, 40%, 96%)`
+| Main page background. Comfortable, low blue-light canvas.
+
+| **Surface Background**
+| Soft Sweet Milk
+| `#FDFBF7` +
+`rgb(253, 251, 247)` +
+`HSL(40, 43%, 98%)`
+| Code blocks, cards, sidebars, and structural containers.
+
+| **Brand Primary**
+| Bourbon Amber
+| `#D97706` +
+`rgb(217, 119, 6)` +
+`HSL(32, 95%, 44%)`
+| High-priority accents, active navigation links, and branding logos.
+
+| **Brand Secondary**
+| Golden Honey
+| `#F59E0B` +
+`rgb(245, 158, 11)` +
+`HSL(38, 92%, 50%)`
+| Focus states, inline link hovers, and warning highlights.
+
+| **Primary Text**
+| Charcoal Espresso
+| `#29180E` +
+`rgb(41, 24, 14)` +
+`HSL(22, 49%, 11%)`
+| Standard body copy and main headings. Soft, high-contrast brown-black.
+
+| **Secondary Text**
+| Toasted Cocoa
+| `#5C3A21` +
+`rgb(92, 58, 33)` +
+`HSL(25, 47%, 25%)`
+| Meta-information, muted text, breadcrumbs, and table borders.
+
+| **Admonition Tint**
+| Pale Toasted Tan
+| `#FEF3C7` +
+`rgb(254, 243, 199)` +
+`HSL(48, 95%, 89%)`
+| Admonition box backgrounds, inline code spans, and subtle callouts.
+|===
+
+==== Dark Mode (Roasted Espresso & Gold)
+Designed to feel like a cozy, dimly lit specialty cafe at night.
+
+[cols="1,2,2,3", options="header"]
+|===
+| Role | Color Name | Hex / RGB / HSL | Usage / Application
+
+| **Primary Background**
+| Roasted Espresso
+| `#120B05` +
+`rgb(18, 11, 5)` +
+`HSL(28, 57%, 5%)`
+| Main dark mode canvas. Rich, comforting dark brown with warm undertones.
+
+| **Surface Background**
+| Dark Cacao Shell
+| `#1F130A` +
+`rgb(31, 19, 10)` +
+`HSL(26, 51%, 8%)`
+| Dark mode cards, code blocks, navigation menus, and tables.
+
+| **Brand Primary**
+| Liquid Gold
+| `#F59E0B` +
+`rgb(245, 158, 11)` +
+`HSL(38, 92%, 50%)`
+| Primary dark mode highlights, active nav, and brand mark highlights.
+
+| **Brand Secondary**
+| Mellow Caramel
+| `#B45309` +
+`rgb(180, 83, 9)` +
+`HSL(26, 90%, 37%)`
+| Warm background highlights, subtle borders, and secondary buttons.
+
+| **Primary Text**
+| Whipped Cream
+| `#FAF0E6` +
+`rgb(250, 240, 230)` +
+`HSL(30, 56%, 94%)`
+| Standard body copy in dark mode. Warm, soft-white for low eye-strain.
+
+| **Secondary Text**
+| Roasted Chicory
+| `#9E7E6B` +
+`rgb(158, 126, 107)` +
+`HSL(22, 22%, 52%)`
+| Muted descriptions, inactive links, and placeholder copy.
+|===
+
+=== 2. Typography
+
+Our typography balances geometric engineering with classic craftsmanship.
+
+* **Primary Headings (H1, H2, H3):** Set in a modern, geometric sans-serif typeface with slightly rounded curves (e.g., `Space Grotesk`, `Eurostile`, or `Plus Jakarta Sans`).
+This reflects the technical, advanced, and sleek geometric structure of the logo.
+* **Body Text:** Set in a high-quality, comfortable serif typeface with low-contrast and generous x-height (e.g., `PT Serif`, `Lora`, or `Charter`).
+This evokes an artisanal, literary, and mature feeling appropriate for deeply reading language specifications and tutorials.
+* **Monospace / Code:** Set in a clean, spacious, and highly legible monospace font with warm-toned programming ligatures (e.g., `JetBrains Mono` or `Fira Code`).
+
+=== 3. Syntax Highlighting Palette
+
+To prevent "syntax carnival," the syntax theme must remain restrained and warm.
+Avoid neon blues and purples.
+
+* **Keywords (`fn`, `handle`, `try`, `let`):** Liquid Gold (`#F59E0B` / `#D97706`).
+* **Types & Interfaces (`Int`, `String`, `A | B`):** Roasted Cocoa / Roasted Chicory (`#9E7E6B` / `#5C3A21`).
+* **Identifiers & Functions (`print`, `calculate`):** Whipped Cream / Charcoal Espresso (`#FAF0E6` / `#29180E`).
+* **Strings & Literals (`"Hello, Bourbon!"`):** Warm Leaf Green (`#16A34A` in light, `#4ADE80` in dark).
+* **Comments & Annotations (`// ...`):** Muted Toasted Tan (`#A18262` / `#6E503F`).
+
+---
+
+== Voice & Tone Guidelines
+
+The Bourbon documentation is a physical embodiment of our craftsmanship.
+We write to educate, empower, and inspire.
+
+=== 1. "Smooth Brew, Sharp Science"
+Our voice must be **welcoming, artisanal, mature, and technically flawless**.
+We avoid aggressive hype, marketing-speak, and overly informal slang.
+Instead, we focus on explaining complex concepts (like algebraic effects or capability security) through clear, logical progression and rich, grounded metaphors.
+
+=== 2. Diátaxis Framework Alignment
+We strictly follow the Diátaxis framework to organize our documents.
+Each document category has a distinct brand-informed tone:
+
+[cols="1,2,3", options="header"]
+|===
+| Category | Brand Alignment | Tone & Writing Standard
+
+| **Tutorials**
+| "A Flight through Bourbon"
+| **Learning-oriented.**
+Gentle, structured, step-by-step guidance.
+Never skip steps or assume prior environment setup.
+Focus on achieving a successful "first sip."
+
+| **How-To Guides**
+| "The Master's Recipes"
+| **Task-oriented.**
+Practical, goal-driven recipes for real-world scenarios.
+Assume the reader knows the basics.
+Provide clear, copy-pasteable, production-ready patterns.
+
+| **Reference**
+| "The Vault / Library"
+| **Information-oriented.**
+Dry, precise, and completely exhaustive.
+No tutorials or friendly explanations—just rigorous specifications, EBNF grammar, type algebra laws, and APIs.
+
+| **Explanation**
+| "Cellar Deep Dives"
+| **Understanding-oriented.**
+Architectural white papers, history, rationale, and design choices.
+Explain *why* we chose set-theoretic types and why algebraic effects represent the future of systems programming.
+|===
+
+---
+
+== Asciidoctor & Markup Writing Standards
+
+To maintain clean, readable source files and precise version control history, all Asciidoctor files must follow these rules.
 
 === 1. Put Each Sentence on its Own Line
 We use **Semantic Line Wrapping** (also known as ventilated prose).
 Instead of wrapping paragraphs at a fixed column width or writing long lines containing multiple sentences, start each separate sentence on its own line.
 
 **Why?**
-* **Cleaner Diffs:** A simple typo fix or change in one sentence won't cause the entire paragraph to be reflowed in git history.
-This makes git diffs extremely precise and easy to review.
-* **Refining Text:** It is easier to swap, comment out, or rearrange sentences when each sentence is on its own line.
-* **Sentence Length Control:** Writing in this style makes it instantly obvious if a sentence is too long or run-on.
+* **Cleaner Diffs:** A simple typo fix or change in one sentence won't cause the entire paragraph to be reflowed in git history, keeping diffs perfectly precise.
+* **Refining Text:** It is significantly easier to swap, comment out, or rearrange sentences when each sentence is on its own line.
+* **Length Control:** Writing in this style makes it instantly obvious if a sentence is too long or run-on.
 
 **Example:**
 [source,asciidoc]
 ----
-This is the first sentence.
-This is the second sentence on a new line.
-Notice how both belong to the same paragraph, but are written on separate lines.
+This is the first sentence of a paragraph.
+This is the second sentence belonging to the exact same paragraph, but written on a brand-new line.
+Notice how both lines will render together as a single continuous paragraph in HTML, but remain perfectly isolated in git.
 ----
 
 === 2. Separate Lists and Titles with Blank Lines
-To ensure proper HTML/PDF rendering and parsing by Asciidoctor:
+To ensure correct HTML/PDF parsing and avoid rendering glitches in Asciidoctor:
 * **Section Titles:** Always place at least one blank line before and after section titles.
 * **List Blocks:** Always place at least one blank line before and after a list block.
 Do not run list items directly into surrounding paragraphs.
@@ -35,17 +256,17 @@ Do not run list items directly into surrounding paragraphs.
 ----
 == Correct Title Spacing
 
-Here is a paragraph of text.
+Here is a paragraph explaining the list.
 
-* First list item
-* Second list item
+* First list item representing an elegant concept.
+* Second list item showcasing capability safety.
 
-Another paragraph of text.
+Another paragraph of text starts here.
 ----
 
 === 3. Use Atx-Style Section Titles
 Always use Atx-style headings using the `=` symbol.
-Do not use Setext-style underlines (using dashes or tildes).
+Do not use Setext-style underlines (using dashes or tildes under the title text).
 
 **Example:**
 [source,asciidoc]
@@ -61,10 +282,51 @@ When creating delimited blocks (such as source code, admonitions, or tables), us
 **Example:**
 [source,asciidoc]
 ----
-[source,zeylan]
+[source,bourbon]
 ----
-void hello() {
-    print("Hello");
+fn hello() {
+    print("Welcome to Bourbon!");
 }
 ----
+----
+
+=== 5. Use Meaningful Admonitions
+Do not overuse warning boxes.
+Use them only when a core concept could easily be misunderstood or cause a build failure:
+
+* `[NOTE]` — To highlight an interesting conceptual link or feature synergy.
+* `[TIP]` — A quick optimization or developer workflow shortcut.
+* `[IMPORTANT]` — A critical rule that, if missed, will lead to unexpected runtime or compile-time behavior.
+* `[WARNING]` — A security alert, especially regarding capability leaks or unsafe sandbox configurations.
+
+---
+
+== Monospace & Code Formatting Conventions
+
+Code blocks in documentation represent the ideal form of Bourbon code.
+They must be written with the utmost care.
+
+* **Runnable & Complete:** Avoid vague, floating snippets.
+Always provide self-contained, valid Bourbon blocks where feasible.
+* **Clear Comments:** Comments in code blocks must focus on **why** something is done, rather than **what** the code does.
+* **Formatting:** Format all documentation code blocks consistently:
+  - 4-space indentation.
+  - Consistent bracket placement (same-line opening brace, matching closing brace on its own line).
+  - Explicit type signatures for public function boundaries to aid readability.
+
+**Example of Ideal Documentation Code Block:**
+
+[source,bourbon]
+----
+/// Computes the running balance for a ledger account.
+/// Returns a list of balances reflecting the historical maturation of deposits.
+fn calculate_running_balances(ledger: List<Transaction>) -> List<Decimal> {
+    // We use a local state handler to cleanly encapsulate intermediate accumulation
+    let mut current_balance = 0.00;
+    
+    map(ledger) { tx =>
+        current_balance = current_balance + tx.amount;
+        current_balance
+    }
+}
 ----

@@ -1,7 +1,7 @@
 = Set-Theoretic Type Algebra
 :navtitle: Type Algebra
 
-Zeylan's type system is built on mathematical set theory, meaning every type represents a set of values.
+Bourbon's type system is built on mathematical set theory, meaning every type represents a set of values.
 This foundation extends directly to **capabilities and algebraic effects**, where interface method sets behave as sets of available operations.
 
 Because of this set-theoretic formulation, the behavior of union (`|`) and intersection (`&`) operators exhibits a dual nature when comparing value-level types (data structures) and capability-level types (interfaces or effect rows).
@@ -10,7 +10,7 @@ Because of this set-theoretic formulation, the behavior of union (`|`) and inter
 
 == 1. Values vs. Capabilities (Duality)
 
-To understand type algebra in Zeylan, we must distinguish between:
+To understand type algebra in Bourbon, we must distinguish between:
 
 *   **Value-Level Types:** Sets representing concrete data instances (e.g. `String`, `Integer`, user-defined classes).
 *   **Capability-Level Types:** Sets representing available operations or interface methods (e.g. `Logger`, `Database`, or custom effects).
@@ -45,7 +45,7 @@ At the value level, a union type represents a value that could belong to set `A`
 *   **Access:** You cannot call methods of `String` or `Integer` directly on the union value.
 You must first prove its concrete type at runtime using flow-sensitive type narrowing (e.g., `is` checks):
 +
-[source,zeylan]
+[source,bourbon]
 ----
 void printLength(String | Integer item) {
     if (is String item) {
@@ -66,7 +66,7 @@ Therefore, the caller/handler must be capable of handling both.
 * **Interface Satisfaction:** When a class implements multiple interfaces, it satisfies their intersection (belonging to both sets simultaneously).
 Since it belongs to both sets, it implements all methods from both:
 +
-[source,zeylan]
+[source,bourbon]
 ----
 class ReplayHandler(...) satisfies Workflow & PaymentService {
     // Implements all methods of Workflow and all methods of PaymentService
@@ -96,7 +96,7 @@ At the capability/effect level, the intersection operator restricts the scope of
 *   **Sandboxing Use-Case:** This is used to restrict untrusted third-party callbacks to a safe subset of their normal effects.
 If `Mask` does not contain file system operations, the callback is blocked from executing them:
 +
-[source,zeylan]
+[source,bourbon]
 ----
 shared T sandbox<T, E, Mask>(T() callback)
     performs (E & Mask)

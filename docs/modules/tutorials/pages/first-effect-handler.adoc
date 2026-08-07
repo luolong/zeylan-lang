@@ -5,7 +5,7 @@ Learn how to write algebraic effect interfaces and handle them linearly using `g
 
 == Defining an Effect Interface
 
-[source,zeylan]
+[source,bourbon]
 ----
 shared interface Logger {
     shared formal void log(String message);
@@ -14,7 +14,7 @@ shared interface Logger {
 
 == Handling an Effect
 
-[source,zeylan]
+[source,bourbon]
 ----
 shared void processUser(String id) performs Logger {
     Logger.log("Processing user: " + id);

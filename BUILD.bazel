@@ -5,10 +5,25 @@ exports_files([
 ])
 
 filegroup(
+    name = "bourbon_ui_srcs",
+    srcs = glob([
+        "bourbon-ui/ui.yml",
+        "bourbon-ui/css/**/*",
+        "bourbon-ui/font/**/*",
+        "bourbon-ui/helpers/**/*",
+        "bourbon-ui/img/**/*",
+        "bourbon-ui/js/**/*",
+        "bourbon-ui/layouts/**/*",
+        "bourbon-ui/partials/**/*",
+    ]),
+    visibility = ["//visibility:public"],
+)
+
+filegroup(
     name = "build",
     srcs = [
         "//compiler:compiler_jvm",
-        "//compiler:zeylan",
+        "//compiler:bourbon",
     ],
     visibility = ["//visibility:public"],
 )

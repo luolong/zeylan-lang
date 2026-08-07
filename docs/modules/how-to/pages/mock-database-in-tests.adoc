@@ -3,7 +3,7 @@
 
 This guide shows how to inject in-memory test doubles for database effects without Dependency Injection frameworks.
 
-[source,zeylan]
+[source,bourbon]
 ----
 shared void testGetProfile() {
     value mockDb = InMemoryDatabase();

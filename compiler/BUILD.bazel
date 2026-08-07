@@ -23,9 +23,9 @@ java_library(
     srcs = glob(["src/main/java/**/*.java"]),
     javacopts = [
         "-Xep:NullAway:ERROR",
-        "-XepOpt:NullAway:AnnotatedPackages=org.zeylan",
+        "-XepOpt:NullAway:AnnotatedPackages=org.bourbon",
         "-XepOpt:NullAway:JSpecifyMode=true",
-        "-Aproject=zeylan",
+        "-Aproject=bourbon",
     ],
     plugins = [
         ":nullaway",
@@ -47,19 +47,19 @@ java_library(
 java_binary(
     name = "compiler_jvm",
     jvm_flags = ["--enable-native-access=ALL-UNNAMED"],
-    main_class = "org.zeylan.compiler.Main",
+    main_class = "org.bourbon.compiler.Main",
     visibility = ["//visibility:public"],
     runtime_deps = [":compiler_lib"],
 )
 
 # Compiled standalone Native Image executable
 native_image(
-    name = "zeylan",
+    name = "bourbon",
     executable_name = "%target%",
     extra_args = [
         "--enable-native-access=ALL-UNNAMED",
     ],
-    main_class = "org.zeylan.compiler.Main",
+    main_class = "org.bourbon.compiler.Main",
     visibility = ["//visibility:public"],
     deps = [
         ":compiler_lib",

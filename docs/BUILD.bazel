@@ -8,6 +8,7 @@ genrule(
         "//:antora-playbook.yml",
         "//:package.json",
         "//:package-lock.json",
+        "//:bourbon_ui_srcs",
     ],
     outs = ["site_archive.tar.gz"],
     cmd = """
@@ -18,11 +19,11 @@ genrule(
 
     # Initialize a temporary git repository so Antora (which requires Git) can run inside the sandbox
     git init
-    git config user.email "build@zeylan.local"
+    git config user.email "build@bourbon.local"
     git config user.name "Bazel Builder"
     
     # Stage the files provided as inputs to the sandbox
-    git add antora-playbook.yml docs package.json package-lock.json
+    git add antora-playbook.yml docs package.json package-lock.json bourbon-ui
     git commit -m "Mock commit for Antora"
 
     # Install dependencies inside the sandbox node_modules using npm ci (faster, doesn't write back)

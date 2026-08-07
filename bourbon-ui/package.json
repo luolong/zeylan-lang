@@ -1,0 +1,9 @@
+{
+  "name": "bourbon-ui",
+  "version": "1.0.0",
+  "description": "Bourbon Programming Language Antora UI theme",
+  "license": "MPL-2.0",
+  "scripts": {
+    "build": "mkdir -p build && zip -FSr build/ui-bundle.zip css font helpers img js layouts partials ui.yml"
+  }
+}

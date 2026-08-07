@@ -1,5 +1,5 @@
 .Architecture & Design Explanations
-* xref:the-zeylan-language-environment.adoc[The Zeylan Language Environment: A White Paper]
+* xref:the-bourbon-language-environment.adoc[The Bourbon Language Environment: A White Paper]
 * Position & Vision Papers
 ** xref:why-algebraic-effects.adoc[Why Algebraic Effects?]
 ** xref:application-frameworks.adoc[Effect-Native Application Frameworks]

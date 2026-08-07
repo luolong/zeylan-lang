@@ -1,7 +1,7 @@
 = EBNF Syntactic Grammar Specification
 :navtitle: EBNF Grammar
 
-Formal Extended Backus-Naur Form (EBNF) grammar specification for Zeylan.
+Formal Extended Backus-Naur Form (EBNF) grammar specification for Bourbon.
 
 == Lexical Grammar
 

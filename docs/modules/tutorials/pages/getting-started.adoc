@@ -1,7 +1,7 @@
-= Getting Started with Zeylan
+= Getting Started with Bourbon
 :navtitle: Getting Started
 
-This tutorial guides you step-by-step through installing Zeylan, writing your first `pure` functions, and compiling a program.
+This tutorial guides you step-by-step through installing Bourbon, writing your first `pure` functions, and compiling a program.
 
 == Prerequisites
 
@@ -9,18 +9,18 @@ This tutorial guides you step-by-step through installing Zeylan, writing your fi
 
 == Writing Hello World
 
-[source,zeylan]
+[source,bourbon]
 ----
 shared void main() {
-    print("Hello, Zeylan!");
+    print("Hello, Bourbon!");
 }
 ----
 
 == Pure Calculations
 
-Functions in Zeylan are pure calculations unless marked with capabilities:
+Functions in Bourbon are pure calculations unless marked with capabilities:
 
-[source,zeylan]
+[source,bourbon]
 ----
 shared pure Float calculateTax(Float amount, Float rate) => amount * rate;
 ----

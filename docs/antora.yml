@@ -1,5 +1,5 @@
-name: zeylan
-title: Zeylan Programming Language
+name: bourbon
+title: Bourbon Programming Language
 version: '1.0-draft'
 start_page: ROOT:index.adoc
 nav:

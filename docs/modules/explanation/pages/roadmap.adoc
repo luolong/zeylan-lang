@@ -1,7 +1,7 @@
 = Layered Roadmap
 :navtitle: Roadmap
 
-Rather than an "all-or-nothing" monolithic language release, Zeylan is engineered in four usable, incremental language dialects, backed by a full standard library and tooling suite.
+Rather than an "all-or-nothing" monolithic language release, Bourbon is engineered in four usable, incremental language dialects, backed by a full standard library and tooling suite.
 
 == Layer 1: Core Pure Dialect (The Mathematical Foundation)
 
@@ -26,8 +26,8 @@ Rather than an "all-or-nothing" monolithic language release, Zeylan is engineere
 
 == Layer 4: Capability Boundaries & Ecosystem Security
 
-* *Scope*: Module-level capability bounds (`module.zeylan`), compile-time taint tracking (`Tainted<T>` vs `Sanitized<T>`), and domain-specific string interpolators (`sql"..."`).
+* *Scope*: Module-level capability bounds (`module.bourbon`), compile-time taint tracking (`Tainted<T>` vs `Sanitized<T>`), and domain-specific string interpolators (`sql"..."`).
 * *Ecosystem & Tooling (Batteries Included)*:
-  * `zeylan` CLI & Build System: Fast compilation, test runner, dependency resolution.
-  * Package Registry (`zeylan.dev`): Zero-trust package registry enforcing module capability grants.
-  * IDE & Tooling: Language Server Protocol (LSP) implementation, tree-sitter grammar, auto-formatter (`zeylan fmt`), and static analysis tools.
+  * `bourbon` CLI & Build System: Fast compilation, test runner, dependency resolution.
+  * Package Registry (`bourbon.dev`): Zero-trust package registry enforcing module capability grants.
+  * IDE & Tooling: Language Server Protocol (LSP) implementation, tree-sitter grammar, auto-formatter (`bourbon fmt`), and static analysis tools.

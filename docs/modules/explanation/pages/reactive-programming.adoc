@@ -5,7 +5,7 @@
 [NOTE]
 ====
 *Document Type:* Design Proposal.
-This document details conceptual programming primitives, interfaces, and patterns for reactive programming in Zeylan, rather than a finalized implementation specification.
+This document details conceptual programming primitives, interfaces, and patterns for reactive programming in Bourbon, rather than a finalized implementation specification.
 ====
 
 In modern application development, handling asynchronous event streams, propagating changes, and building user interfaces require some form of reactive programming.
@@ -18,16 +18,16 @@ While powerful, this monadic approach introduces significant overhead:
 * **Complex Lifetimes:** Subscriptions must be manually managed or untangled to avoid resource/memory leaks.
 * **Opaque Stack Traces:** Asynchronous boundaries break standard thread stack traces, making debugging extremely difficult.
 
-In an **effect-native language** like Zeylan, we shift the reactive paradigm.
+In an **effect-native language** like Bourbon, we shift the reactive paradigm.
 Instead of wrapping *values* in container types, we represent *event occurrences, control suspension, and change propagation* as first-class **algebraic effects**. 
 
 ---
 
 == 1. Streams as Multi-Shot Algebraic Effects
 
-At its core, a stream is a producer that emits values over time to a consumer. In Zeylan, we can represent this using a `Yield<T>` effect:
+At its core, a stream is a producer that emits values over time to a consumer. In Bourbon, we can represent this using a `Yield<T>` effect:
 
-[source,zeylan]
+[source,bourbon]
 ----
 effect Yield<T> {
     void yield(T value);
@@ -41,7 +41,7 @@ Because algebraic effects capture the **delimited continuation** (the rest of th
 A producer is a standard function that performs the `Yield` effect whenever it has a new value.
 Notice that it looks and behaves like normal, sequential code:
 
-[source,zeylan]
+[source,bourbon]
 ----
 void generateNumbers() performs Yield<Integer> {
     variable Integer i = 0;
@@ -57,13 +57,13 @@ void generateNumbers() performs Yield<Integer> {
 == 2. Implementing Reactive Operators
 
 In monadic reactive programming, every operator (`map`, `filter`, `scan`) is a custom class implementing a subscription interface.
-In Zeylan, operators are simply functions that execute an effectful block, handle its `Yield` effect, and perform a new `Yield` effect.
+In Bourbon, operators are simply functions that execute an effectful block, handle its `Yield` effect, and perform a new `Yield` effect.
 
 === Stateless Transformations
 
 A `filter` operator handles the `Yield` effect of a source stream, checks the predicate, and conditionally propagates a new `yield`:
 
-[source,zeylan]
+[source,bourbon]
 ----
 void filter<T>(void() source, Boolean(T) predicate) performs Yield<T> {
     handle source() {
@@ -80,9 +80,9 @@ void filter<T>(void() source, Boolean(T) predicate) performs Yield<T> {
 === Stateful Accumulators
 
 Stateful operators like `scan` (reactive accumulator) or `buffer` typically require managing hidden instance variables.
-In Zeylan, stateful operators are simple functions where the state lives naturally inside the operator's stack frame:
+In Bourbon, stateful operators are simple functions where the state lives naturally inside the operator's stack frame:
 
-[source,zeylan]
+[source,bourbon]
 ----
 void scan<T, R>(void() source, R initial, R(R, T) accumulator) performs Yield<R> {
     variable R current = initial;
@@ -103,10 +103,10 @@ void scan<T, R>(void() source, R initial, R(R, T) accumulator) performs Yield<R>
 
 Time-based operators (like `delay`, `debounce`, or `throttle`) in other systems require passing explicit `Scheduler` objects. 
 
-In Zeylan, scheduling is handled by composing multiple effects.
+In Bourbon, scheduling is handled by composing multiple effects.
 For instance, a `delay` operator simply combines the `Yield` effect with an asynchronous `Timer` capability:
 
-[source,zeylan]
+[source,bourbon]
 ----
 void delay<T>(void() source, Duration duration) performs Yield<T> | Timer {
     handle source() {
@@ -134,7 +134,7 @@ In an effect-native language, **cancellation is done by discarding the continuat
 The `take` operator limits the number of items emitted.
 Once the limit is reached, it simply returns, causing the producer to terminate and run its scope finalizers immediately:
 
-[source,zeylan]
+[source,bourbon]
 ----
 void take<T>(void() source, Integer limit) performs Yield<T> {
     variable Integer count = 0;
@@ -160,13 +160,13 @@ For a `switchMap` style behavior, when the outer stream yields a new value, the 
 
 ---
 
-== 5. Architectural Benefits in Zeylan
+== 5. Architectural Benefits in Bourbon
 
 Comparing the effectful approach to traditional reactive frameworks highlights several structural benefits:
 
 [cols="1,2,2", options="header"]
 |===
-| Feature | Monadic Reactive (e.g., RxJS, RxJava) | Effect-Native Reactive (Zeylan)
+| Feature | Monadic Reactive (e.g., RxJS, RxJava) | Effect-Native Reactive (Bourbon)
 
 | **Type Signature**
 | Monadic container (e.g., `Observable<T>`)

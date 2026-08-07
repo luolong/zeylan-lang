@@ -5,13 +5,13 @@
 [NOTE]
 ====
 *Document Type:* Design Proposal.
-This document details conceptual programming primitives, interfaces, and patterns for durable workflow execution in Zeylan, rather than a finalized implementation specification.
+This document details conceptual programming primitives, interfaces, and patterns for durable workflow execution in Bourbon, rather than a finalized implementation specification.
 ====
 
 A **durable workflow** is a stateful program that is guaranteed to run to completion even in the presence of process crashes, server restarts, network splits, or database failures.
 Popularized by platforms like Temporal, Cadence, and AWS Step Functions, durable execution typically requires specialized SDKs and complex runtime wrappers.
 
-In an **effect-native language** like Zeylan, the core mechanics of durable execution—namely **determinism guarantees**, **event replay (event sourcing)**, and **state suspension**—can be modeled natively as compiler-enforced algebraic effects.
+In an **effect-native language** like Bourbon, the core mechanics of durable execution—namely **determinism guarantees**, **event replay (event sourcing)**, and **state suspension**—can be modeled natively as compiler-enforced algebraic effects.
 
 ---
 
@@ -29,18 +29,18 @@ For replay to work, the workflow code must be **strictly deterministic**.
 If the workflow reads the system clock, generates a random number, or queries a database directly, the replay path will diverge, leading to non-deterministic errors.
 
 Traditional languages struggle with this because side-effects are implicit and cannot be statically blocked.
-In Zeylan, the compiler's **effect row system** solves this problem at compile-time.
+In Bourbon, the compiler's **effect row system** solves this problem at compile-time.
 
 ---
 
 == 2. Statically Enforced Determinism and Typed Activities
 
-In Zeylan, we can restrict a workflow's access to side-effects using the type system.
+In Bourbon, we can restrict a workflow's access to side-effects using the type system.
 A durable workflow function specifies the exact capabilities it performs, such as business-specific activity interfaces (e.g. `PaymentService`) and core orchestrator controls (e.g. `Workflow`).
 
 At the application boundary, these abstract capabilities are bound to concrete handlers (like the orchestrator's `ReplayHandler`) using a standard `handle ... with` block:
 
-[source,zeylan]
+[source,bourbon]
 ----
 shared interface PaymentService {
     shared formal CardInfo getPaymentDetails(String orderId);
@@ -82,7 +82,7 @@ However, because `Time` is represented as a standard capability, the `Workflow` 
 This allows developers to use standard, familiar library calls like `Time.now()`.
 When the orchestrator executes the workflow, its handler intercepts the `Time` capability and returns the deterministic replay timestamp:
 
-[source,zeylan]
+[source,bourbon]
 ----
 // Workflow inherits Time, making standard time calls safe and replayable
 shared interface Workflow satisfies Time {
@@ -109,7 +109,7 @@ The code runs at CPU speed without making any network calls.
 
 Here is a simplified model of the interfaces and the replay handler implementation:
 
-[source,zeylan]
+[source,bourbon]
 ----
 shared interface Time {
     shared formal Instant now();
@@ -168,7 +168,7 @@ class ReplayHandler(List<Event> history) satisfies Workflow & PaymentService {
 
 In typical durable execution engines, when a workflow sleeps for 30 days, the process must either remain active in memory (wasting resources) or the engine must use complex compiler transforms to convert the code into a state machine (generating a virtual state-tree).
 
-Because Zeylan's algebraic effects capture the **delimited continuation** as a first-class stack object, the runtime can serialize this continuation object directly to a persistent database:
+Because Bourbon's algebraic effects capture the **delimited continuation** as a first-class stack object, the runtime can serialize this continuation object directly to a persistent database:
 
 1. When a workflow executes `Workflow.sleep(Duration.days(30))`, the handler captures the continuation (the remaining execution stack of the workflow).
 2. The handler serializes the continuation object to a database (e.g. Postgres) and frees up the execution thread.
@@ -179,11 +179,11 @@ The developer writes natural, blocking-style code, while the runtime handles dis
 
 ---
 
-== 5. Architectural Benefits in Zeylan
+== 5. Architectural Benefits in Bourbon
 
 [cols="1,2,2", options="header"]
 |===
-| Feature | Traditional SDKs (e.g. Temporal) | Effect-Native (Zeylan)
+| Feature | Traditional SDKs (e.g. Temporal) | Effect-Native (Bourbon)
 
 | **Determinism Check**
 | Runtime verification or custom static analysis tools.

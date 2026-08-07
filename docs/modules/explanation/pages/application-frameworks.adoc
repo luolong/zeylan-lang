@@ -5,7 +5,7 @@
 [NOTE]
 ====
 *Document Type:* Position Paper.
-This document outlines a conceptual vision and design philosophy for decoupling business logic boundaries and execution topologies in Zeylan, rather than a finalized implementation specification.
+This document outlines a conceptual vision and design philosophy for decoupling business logic boundaries and execution topologies in Bourbon, rather than a finalized implementation specification.
 ====
 
 Modern enterprise architectures have settled on two primary styles for structuring large systems:
@@ -16,7 +16,7 @@ However, both patterns introduce steep costs.
 In Moduliths, traditional languages struggle to statically prevent developers from bypassing module boundaries (e.g., importing another module's database repository directly).
 In Microservices, developers are forced to write transport-specific boilerplate (e.g., rewriting in-memory service calls into HTTP/gRPC client stubs with retries and circuit breakers).
 
-In an **effect-native language** like Zeylan, algebraic effects and handlers decouple the **business interface** from the **execution target**, making it trivial to build strict modular monoliths that can be split into microservices with zero code changes.
+In an **effect-native language** like Bourbon, algebraic effects and handlers decouple the **business interface** from the **execution target**, making it trivial to build strict modular monoliths that can be split into microservices with zero code changes.
 
 ---
 
@@ -25,7 +25,7 @@ In an **effect-native language** like Zeylan, algebraic effects and handlers dec
 In a traditional Java or TypeScript monolith, packaging conventions are easily bypassed.
 A developer in the `Billing` package can easily import and query the `UserRepository` database schema directly, tightly coupling the database schemas of different domains.
 
-In Zeylan, this is prevented by the **Capability-Based Module System** (see [Capability-Based Modules RFC](file:///Users/rolandtepp/Developer/luolong/zeylan-lang/docs/modules/rfcs/pages/capability-based-modules.adoc)).
+In Bourbon, this is prevented by the **Capability-Based Module System** (see [Capability-Based Modules RFC](file:///Users/rolandtepp/Developer/luolong/bourbon-lang/docs/modules/rfcs/pages/capability-based-modules.adoc)).
 
 Capabilities (effects) are governed at the module boundary:
 
@@ -33,7 +33,7 @@ Capabilities (effects) are governed at the module boundary:
 *   The `billing.domain` module declares that it requires `UserService` but does **not** permit direct `Database` capability.
 *   If a developer in the `billing.domain` module attempts to perform a database write or access a DB client, the compiler fails immediately, enforcing strict modular database isolation at compile-time.
 
-[source,zeylan]
+[source,bourbon]
 ----
 // Declared in billing.domain module
 // Statically blocked if direct Database is attempted:
@@ -53,13 +53,13 @@ void processBill(String invoiceId) performs UserService | Billing {
 One of the greatest challenges of transitioning from a Modulith to Microservices—or the other way around (consolidating microservices back into a Modulith)—is the need to refactor method calls.
 Business logic becomes polluted with transport-specific concerns (JSON serialization, HTTP clients, stubs, and network handlers).
 
-In Zeylan, business logic is completely **transport-agnostic**.
+In Bourbon, business logic is completely **transport-agnostic**.
 Calling a service is simply invoking an abstract capability.
 The deployment environment determines how the capability is handled:
 
 === Step 1: Define the Abstract Capability
 
-[source,zeylan]
+[source,bourbon]
 ----
 shared interface UserService {
     shared formal User getUser(String id);
@@ -70,7 +70,7 @@ shared interface UserService {
 
 The calling code simply declares that it performs `UserService`:
 
-[source,zeylan]
+[source,bourbon]
 ----
 void processCheckout(String itemId, String userId) performs UserService | PaymentService {
     value user = UserService.getUser(userId);
@@ -84,7 +84,7 @@ void processCheckout(String itemId, String userId) performs UserService | Paymen
 
 The framework binds the capability to the local database-backed implementation:
 
-[source,zeylan]
+[source,bourbon]
 ----
 class LocalUserService(Database db) satisfies UserService {
     shared actual User getUser(String id) {
@@ -108,7 +108,7 @@ void dispatchLocalRequest(Request req) {
 If the `user.domain` service is split into a separate physical microservice, the business logic (`processCheckout`) remains **completely untouched**.
 The framework simply binds the `UserService` capability to a remote RPC handler:
 
-[source,zeylan]
+[source,bourbon]
 ----
 class RemoteUserService() satisfies UserService {
     shared actual User getUser(String id) performs Http | Async {
@@ -142,7 +142,7 @@ In Java, it must be rewritten to return a reactive type like `Mono<User>` or `Co
 
 Because of this type mismatch, you cannot swap a local implementation for a remote one without modifying the calling business logic's signatures.
 
-In Zeylan, algebraic effects unify synchronous and asynchronous execution.
+In Bourbon, algebraic effects unify synchronous and asynchronous execution.
 The signature `User getUser(String id)` does not contain any async wrappers.
 *   **Synchronous Execution:** In the modular monolith, the handler executes in-process and returns the `User` value immediately.
 *   **Asynchronous Execution:** In the microservice deployment, the network operations perform the `Async` capability.
@@ -150,7 +150,7 @@ Under the hood, the runtime handles `Async` by capturing the execution's delimit
 
 Here is how the framework router binds the proposed `Async` capability handler at the system boundary:
 
-[source,zeylan]
+[source,bourbon]
 ----
 // The framework router binds the Async capability to the fiber scheduler/event loop
 void dispatchRemoteRequest(Request req) {
@@ -176,7 +176,7 @@ This unification is what makes complete transport-agnostic local/remote duality 
 In distributed microservices, propagating request-scoped context (such as transaction IDs, security tokens, or tracing headers) across network boundaries is notoriously difficult.
 Typically, developers rely on tracing sidecars or custom HTTP interceptors.
 
-Because Zeylan's algebraic effects naturally capture continuations and capability bindings:
+Because Bourbon's algebraic effects naturally capture continuations and capability bindings:
 
 *   **Locally (Modulith):** The framework-scoped context (e.g. `SecurityContext`) is preserved across threads and asynchronous boundaries automatically, avoiding fragile `ThreadLocal` variables.
 *   **Remotely (Microservices):** When the `RemoteUserService` capability handler makes an HTTP call, the handler intercepts the current tracing context effect and serializes it into the outgoing HTTP request headers automatically.
@@ -186,7 +186,7 @@ Because Zeylan's algebraic effects naturally capture continuations and capabilit
 == 5. Architectural Comparison
 
 |===
-| Feature | Traditional Frameworks (Spring/NestJS) | Effect-Native Frameworks (Zeylan)
+| Feature | Traditional Frameworks (Spring/NestJS) | Effect-Native Frameworks (Bourbon)
 
 | **Module Isolation**
 | Soft boundaries.

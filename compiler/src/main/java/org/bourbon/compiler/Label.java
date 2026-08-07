@@ -1,0 +1,30 @@
+package org.bourbon.compiler;
+
+import java.util.List;
+import java.util.Optional;
+
+import org.jspecify.annotations.Nullable;
+import org.bourbon.compiler.util.Lists;
+
+/**
+ * A label associates a message with a specific source code span.
+ * It is used to build rich diagnostics with inline code annotations.
+ */
+public record Label(
+    SourceSpan span,
+    @Nullable String message,
+    boolean isPrimary
+) {
+
+    public static Label primaryOf(SourceSpan span, String message) {
+        return new Label(span, message, true);
+    }
+
+    public static Label of(SourceSpan span, String message) {
+        return new Label(span, message, false);
+    }
+
+    public static Optional<Label> of(List<Label> labels) {
+        return Lists.findFirst(labels, Label::isPrimary);
+    }
+}

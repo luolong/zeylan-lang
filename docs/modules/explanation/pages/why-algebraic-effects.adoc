@@ -5,10 +5,10 @@
 [NOTE]
 ====
 *Document Type:* Position Paper.
-This document outlines a conceptual vision and design philosophy for managing control flow and dependencies in Zeylan, rather than a finalized implementation specification.
+This document outlines a conceptual vision and design philosophy for managing control flow and dependencies in Bourbon, rather than a finalized implementation specification.
 ====
 
-An architectural deep dive into why Zeylan uses row-polymorphic algebraic effects to eliminate the "colored function" problem and simplify dependency injection.
+An architectural deep dive into why Bourbon uses row-polymorphic algebraic effects to eliminate the "colored function" problem and simplify dependency injection.
 
 
 == 1. The Challenge of Modern Control Flow
@@ -23,7 +23,7 @@ However, traditional language designs force a steep architectural compromise to 
 2. **Function Coloring:** Splitting the language into synchronous and asynchronous functions via special keywords (`async`/`await`).
 3. **Implicit Dependencies:** Relying on heavy runtime dependency injection (DI) frameworks that use reflection and pollute stack traces.
 
-Zeylan unifies these concerns under a single, cohesive language feature: **first-class algebraic effects**.
+Bourbon unifies these concerns under a single, cohesive language feature: **first-class algebraic effects**.
 
 ---
 
@@ -35,10 +35,10 @@ In languages like JavaScript, Rust, C#, and Python, adding asynchronous network 
 * Once a helper function is marked `async`, every caller up the call stack must also be marked `async` and use the `await` keyword.
 * This partitions the codebase into two incompatible "colors"—synchronous and asynchronous.
 
-Zeylan eliminates the `async`/`await` keywords entirely.
+Bourbon eliminates the `async`/`await` keywords entirely.
 A function that performs an asynchronous operation simply lists the capability in its effect row:
 
-[source,zeylan]
+[source,bourbon]
 ----
 shared UserProfile getProfile(String userId) performs Database | Logger {
     Logger.info("Fetching profile for " + userId);
@@ -59,12 +59,12 @@ For a detailed breakdown of the proposed asynchronous interface and execution me
 In typical enterprise architectures, we use interfaces to decouple code from concrete external databases or services, enabling unit testing with in-memory mocks.
 To manage this decoupling, we use dependency injection (DI) containers which introduce significant runtime reflection, slow startup times, and opaque stack traces.
 
-In Zeylan, dependency injection is a native compiler feature:
+In Bourbon, dependency injection is a native compiler feature:
 
 1. **Declare Capabilities:** Functions explicitly state what external capabilities they perform (`performs Database`).
 2. **Handle at the Boundary:** The application entry point (or test harness) handles the effect by providing a concrete implementation.
 
-[source,zeylan]
+[source,bourbon]
 ----
 // Production handler binding
 handle {
@@ -92,7 +92,7 @@ Lifetimes and scopes are naturally managed by the call stack.
 
 [cols="1,2,2",options="header"]
 |===
-| Dimension | Traditional Model (Node / Java / C#) | Effect-Native Model (Zeylan)
+| Dimension | Traditional Model (Node / Java / C#) | Effect-Native Model (Bourbon)
 
 | *Concurrency Syntax*
 | Verbose `async` / `await` keywords and monadic pipelines.
