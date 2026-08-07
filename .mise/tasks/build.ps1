@@ -1,4 +1,2 @@
-#!/usr/bin/env bash
 #MISE description="Build all targets, including the native compiler"
-
-exec bazel build //:build
+bazel build //:build

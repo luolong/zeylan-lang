@@ -1,15 +1,20 @@
 package org.zeylan.compiler.cli;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.concurrent.Callable;
 
 import org.jline.reader.EndOfFileException;
 import org.jline.reader.LineReader;
 import org.jline.reader.LineReaderBuilder;
 import org.jline.reader.UserInterruptException;
+import org.jline.terminal.Terminal;
 import org.jline.terminal.TerminalBuilder;
+import org.zeylan.compiler.Diagnostic;
+import org.zeylan.compiler.DiagnosticFormatter;
+import org.zeylan.compiler.DiagnosticFormatter.OutputHandler;
 import org.zeylan.compiler.Scanner;
-import org.zeylan.compiler.StringSource;
+import org.zeylan.compiler.Source;
 
 import picocli.CommandLine.Command;
 
@@ -24,6 +29,7 @@ public final class ReplCommand implements Callable<Integer> {
 
     @Override
     public Integer call() {
+        DiagnosticFormatter.setUseNerdFonts(true);
         if (System.console() == null) {
             System.err.println("Error: The Zeylan REPL requires an interactive TTY environment and cannot be run in a non-interactive console.");
             System.err.println("Please run the REPL from a native terminal.");
@@ -34,8 +40,6 @@ public final class ReplCommand implements Callable<Integer> {
                 .system(true)
                 .name("Zeylan")
                 .build()) {
-
-            ReplDiagnosticHelper reporter = new ReplDiagnosticHelper();
 
             LineReader reader = LineReaderBuilder.builder()
                     .terminal(terminal)
@@ -65,9 +69,16 @@ public final class ReplCommand implements Callable<Integer> {
                     continue;
                 }
 
-                var scanner = new Scanner(StringSource.of(line), reporter);
+                var source = Source.of(line);
+
+                var diagnostics = new ArrayList<Diagnostic>();
+                var scanner = new Scanner(source, diagnostics::add);
                 var tokens = scanner.scanTokens();
-                reporter.printDiagnostics(line, terminal.writer());
+
+                for (var diagnostic: diagnostics) {
+                    DiagnosticFormatter.format(source, diagnostic,
+                            OutputHandler.of(text -> terminal.writer().println(text)));
+                }
 
                 // Echo back for now
                 for (var token : tokens) {

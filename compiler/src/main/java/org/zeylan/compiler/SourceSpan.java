@@ -1,10 +1,9 @@
 package org.zeylan.compiler;
 
 import java.nio.file.Path;
-import org.jspecify.annotations.Nullable;
 
 public record SourceSpan(
-        @Nullable Path filepath,
+        SourceName name,
         int line,
         int column,
         int startOffset,
@@ -12,5 +11,35 @@ public record SourceSpan(
 
     public interface Provider {
         SourceSpan at(int line, int column, int startOffset, int length);
+    }
+
+    public sealed interface SourceName {
+        String name();
+
+        static SourceName of(String name) {
+            return new Name(name);
+        }
+
+        static SourceName of(Path path) {
+            return new FilePath(path);
+        }
+
+        record Name(String name) implements SourceName {
+
+            @Override public String toString() {
+                return name();
+            }
+
+        }
+        record FilePath(Path path) implements SourceName {
+            public String name() {
+                return path.toString();
+            }
+
+            @Override public String toString() {
+                return name();
+            }
+
+        }
     }
 }

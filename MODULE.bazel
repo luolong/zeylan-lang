@@ -3,6 +3,13 @@
 bazel_dep(name = "rules_graalvm", version = "0.11.1")
 bazel_dep(name = "rules_java", version = "9.7.0")
 bazel_dep(name = "rules_jvm_external", version = "6.7")
+bazel_dep(name = "contrib_rules_jvm", version = "0.34.0")
+
+# Pin rules_go and rules_android to compatible versions. They are pulled in transitively
+# by rules_jvm_external and contrib_rules_jvm, but their default transitive versions
+# use deprecated APIs (like CcInfo) incompatible with modern Bazel.
+bazel_dep(name = "rules_go", version = "0.60.0")
+bazel_dep(name = "rules_android", version = "0.7.3")
 
 # Setup GraalVM Toolchain (Java 25 Community Edition)
 gvm = use_extension("@rules_graalvm//:extensions.bzl", "graalvm")
@@ -35,6 +42,14 @@ maven.install(
         "com.uber.nullaway:nullaway:0.13.8",
         "info.picocli:picocli:4.7.6",
         "info.picocli:picocli-codegen:4.7.6",
+        "org.junit.jupiter:junit-jupiter-api",
+        "org.junit.jupiter:junit-jupiter-engine",
+        "org.junit.jupiter:junit-jupiter-params",
+        "org.junit.platform:junit-platform-launcher",
+        "org.junit.platform:junit-platform-reporting",
+    ],
+    boms = [
+        "org.junit:junit-bom:6.1.3",
     ],
     fetch_javadoc = True,
     fetch_sources = True,

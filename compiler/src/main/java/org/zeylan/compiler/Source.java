@@ -1,51 +1,129 @@
 package org.zeylan.compiler;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
-import org.zeylan.compiler.SourceSpan.Provider;
 
 /**
  * Stateful source for scanner.
  */
 @NullMarked
-public abstract class Source implements CharSequence {
+public class Source implements CharSequence {
+
+    private final CharSequence content;
+    private final String name;
 
     private int start = 0;
     private int current = 0;
+    private char currentChar = '\0';
 
-    private int line = 1;
-    private int column = 1;
+    private int startLine = 1;
+    private int currentLine = 1;
+    private final List<Integer> lineOffsets = new ArrayList<>(List.of(start));
 
-    protected abstract CharSequence content();
 
-    abstract static class FileSource extends Source {
-        abstract Path filePath();
-
-        final Provider sourceSpan() {
-            return (int line, int column, int startOffset, int length) -> new SourceSpan(filePath(), line, column, startOffset, length);
-        }
+    private Source(CharSequence content, String name) {
+        this.content = content;
+        this.name = name;
     }
 
-    public abstract static class AnonymousSource extends Source {
-        final Provider sourceSpan() {
-            return (int line, int column, int startOffset, int length) -> new SourceSpan(null, line, column, startOffset, length);
-        }
+    public CharSequence content() {
+        return content;
     }
 
-    //<editor-fold desc="Folding: Scanner helpers">
+    public String name() {
+        return name;
+    }
+
+    //<editor-fold desc="Current source positions">
+
+    int column() {
+        int lineOffset = lineOffset(startLine);
+        return start - lineOffset + 1;
+    }
+
+    int start() {
+        return start;
+    }
+
+    int current() {
+        return current;
+    }
+
+    private int lineOffset(int line) {
+        return lineOffsets.get(line - 1);
+    }
+
+    //</editor-fold>
+
+    //<editor-fold desc="Scanner helpers">
 
     public boolean isAtEnd() {
         return current >= length();
     }
 
-    public void startAtCurrent() {
+    public void tokenStart() {
+        startLine = currentLine;
         start = current;
     }
 
+    public void tokenReset() {
+        current = start;
+    }
+
+    Source resetToLine(int line) {
+        if (line < 1) throw new IllegalArgumentException("line must be greater than zero");
+        if (line <= lineOffsets.size()) {
+            current = lineOffset(line);
+            currentLine = line;
+            tokenStart();
+        } else {
+            while (!isAtEnd() && currentLine < line) advance();
+            tokenStart();
+        }
+        return this;
+    }
+
     public char advance() {
-        return charAt(current++);
+        currentChar = charAt(current++);
+        if (currentChar == '\n') {
+            lineOffsets.add(currentLine++, current);
+        }
+        return currentChar;
+    }
+
+    public char peek() {
+        if (isAtEnd())
+            return '\0';
+        return charAt(current);
+    }
+
+    public boolean peek(char expected) {
+        if (isAtEnd())
+            return false;
+
+        return charAt(current) == expected;
+    }
+
+    public boolean match(char expected) {
+        if (peek(expected)) {
+            current++;
+            return true;
+        }
+
+        return false;
+    }
+
+    public String lexeme() {
+        return subSequence(start, current).toString();
     }
 
     public Token token(TokenType type) {
@@ -53,28 +131,33 @@ public abstract class Source implements CharSequence {
     }
 
     public Token token(TokenType type, @Nullable Object literal) {
-        var lexeme = subSequence(start, current).toString();
-        return new Token(type, lexeme, literal, line, column, start, current - start);
+        return new Token(type, lexeme(), literal, startLine, column(), start, current - start);
     }
 
     //</editor-fold>
 
+    //<editor-fold desc="SourceSpan creation">
 
-    //<editor-fold desc="Folding: SourceSpan Creation methods">
-
-    abstract Provider sourceSpan();
-
-    public final SourceSpan spanAt(int line, int column, int startOffset, int length) {
-        return sourceSpan().at(line, column, startOffset, length);
+    protected SourceSpan.SourceName sourceName() {
+        return SourceSpan.SourceName.of(name());
     }
 
-    public final SourceSpan spanAtCurrent() {
-        return sourceSpan().at(line, column, start, current - start);
+    protected final SourceSpan.Provider sourceSpan() {
+        return (int line, int column, int startOffset, int length) ->
+                new SourceSpan(sourceName(), line, column, startOffset, length);
+    }
+
+    public final SourceSpan spanAt(int startOffset, int length) {
+        return sourceSpan().at(startLine, column(), startOffset, length);
+    }
+
+    public final SourceSpan currentSpan() {
+        return sourceSpan().at(startLine, column(), start, current - start);
     }
 
     //</editor-fold>
 
-    //<editor-fold desc="Folding: CharSequence default implementation">
+    //<editor-fold desc="CharSequence default implementation">
 
     @Override
     public final int length() {
@@ -96,4 +179,59 @@ public abstract class Source implements CharSequence {
     }
 
     //</editor-fold>
+
+    //<editor-fold desc="Creating a source">
+
+    public static Source of(CharSequence content) {
+        if (content instanceof Source source) {
+            return named(source.name()).of(source.content());
+        }
+        return named("<string>").of(content);
+    }
+
+    public static Source of(InputStream stream) throws IOException {
+        if (stream == System.in) return stdIn();
+        return named("<stream>").of(Content.read(stream));
+    }
+
+    public static Source of(Path filePath) throws IOException {
+        String sourceName = filePath.getFileName().toString();
+        return named(sourceName).of(Content.read(filePath));
+    }
+
+    public static Source stdIn() throws IOException {
+        return named("<stdin>").of(Content.read(System.in));
+    }
+
+    static SourceName named(String name) {
+        return new SourceName(name);
+    }
+
+    public static class SourceName {
+        private final String name;
+
+        private SourceName(String name) {
+            this.name = name;
+        }
+
+        public Source of(CharSequence content) {
+            return new Source(content, name);
+        }
+    }
+
+    //</editor-fold>
+
+    static abstract class Content {
+        public static CharSequence read(InputStream input) throws IOException {
+            return read(input, StandardCharsets.UTF_8);
+        }
+
+        public static CharSequence read(InputStream input, Charset charset) throws IOException {;
+            return new String(input.readAllBytes(), charset);
+        }
+
+        public static CharSequence read(Path filePath) throws IOException {
+            return Files.readString(filePath);
+        }
+    }
 }

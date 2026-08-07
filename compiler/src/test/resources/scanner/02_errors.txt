@@ -1,0 +1,15 @@
+======================
+Unexpected Character
+======================
+( @ )
+---
+LEFT_PAREN @1
+✗ error[ZSC0100]: Unexpected character
+  --> <repl>:1:3
+    |
+  1 | ( @ )
+    |   ^ Unexpected symbol
+    |
+RIGHT_PAREN @5
+---
+EOF @1

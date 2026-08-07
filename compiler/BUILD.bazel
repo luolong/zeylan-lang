@@ -1,3 +1,4 @@
+load("@contrib_rules_jvm//java:defs.bzl", "java_test_suite")
 load("@rules_graalvm//graalvm:defs.bzl", "native_image")
 load("@rules_java//java:defs.bzl", "java_binary", "java_library", "java_plugin")
 
@@ -32,20 +33,21 @@ java_library(
     ],
     visibility = ["//visibility:private"],
     deps = [
+        "@maven//:info_picocli_picocli",
         "@maven//:org_jline_jansi",
+        "@maven//:org_jline_jline_reader",
         "@maven//:org_jline_jline_terminal",
         "@maven//:org_jline_jline_terminal_jni",
-        "@maven//:org_jline_jline_reader",
         "@maven//:org_jspecify_jspecify",
-        "@maven//:info_picocli_picocli",
+        "@maven//:org_junit_jupiter_junit_jupiter_api",
     ],
 )
 
 # Standard JVM-based executable
 java_binary(
     name = "compiler_jvm",
-    main_class = "org.zeylan.compiler.Main",
     jvm_flags = ["--enable-native-access=ALL-UNNAMED"],
+    main_class = "org.zeylan.compiler.Main",
     visibility = ["//visibility:public"],
     runtime_deps = [":compiler_lib"],
 )
@@ -53,14 +55,33 @@ java_binary(
 # Compiled standalone Native Image executable
 native_image(
     name = "zeylan",
+    executable_name = "%target%",
+    extra_args = [
+        "--enable-native-access=ALL-UNNAMED",
+    ],
     main_class = "org.zeylan.compiler.Main",
     visibility = ["//visibility:public"],
     deps = [
         ":compiler_lib",
     ],
-    extra_args = [
-        "--enable-native-access=ALL-UNNAMED",
-    ],
-    executable_name = "%target%",
 )
 
+# JUnit 5 Compiler Test Suite
+java_test_suite(
+    name = "compiler_tests",
+    srcs = glob(["src/test/java/**/*.java"]),
+    resources = glob(["src/test/resources/**"]),
+    runner = "junit5",
+    runtime_deps = [
+        "@maven//:org_junit_jupiter_junit_jupiter_engine",
+        "@maven//:org_junit_platform_junit_platform_launcher",
+        "@maven//:org_junit_platform_junit_platform_reporting",
+    ],
+    deps = [
+        ":compiler_lib",
+        "@maven//:org_jspecify_jspecify",
+        "@maven//:org_junit_jupiter_junit_jupiter_api",
+        "@maven//:org_junit_jupiter_junit_jupiter_params",
+        "@maven//:org_junit_platform_junit_platform_commons",
+    ],
+)

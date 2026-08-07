@@ -16,7 +16,15 @@ public record Label(
     boolean isPrimary
 ) {
 
-    public static Optional<Label> primary(List<Label> labels) {
+    public static Label primaryOf(SourceSpan span, String message) {
+        return new Label(span, message, true);
+    }
+
+    public static Label of(SourceSpan span, String message) {
+        return new Label(span, message, false);
+    }
+
+    public static Optional<Label> of(List<Label> labels) {
         return Lists.findFirst(labels, Label::isPrimary);
     }
 }

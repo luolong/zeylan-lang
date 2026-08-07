@@ -1,6 +1,8 @@
 # Package Manager / General
 node_modules/
 .git_temp/
+.DS_Store
+**/.DS_Store
 
 # Bazel & BSP
 /bazel-*
@@ -19,6 +21,7 @@ node_modules/
 .idea/compiler.xml
 .idea/vcs.xml
 .idea/jujutsu.xml
+.idea/mise.xml
 *.iml
 
 # Java compiled files, logs, & archives

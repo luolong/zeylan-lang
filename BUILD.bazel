@@ -3,3 +3,21 @@ exports_files([
     "package.json",
     "package-lock.json",
 ])
+
+filegroup(
+    name = "build",
+    srcs = [
+        "//compiler:compiler_jvm",
+        "//compiler:zeylan",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+test_suite(
+    name = "test",
+    tests = [
+        "//compiler:compiler_tests",
+    ],
+    visibility = ["//visibility:public"],
+)
+

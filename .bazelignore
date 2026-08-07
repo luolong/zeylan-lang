@@ -1,3 +1,7 @@
 .mise
 node_modules
 build
+bazel-bin
+bazel-out
+bazel-testlogs
+bazel-zeylan-lang

@@ -1,0 +1,17 @@
+==================
+Zeylan Operators
+==================
+( { , . - + ; * } )
+---
+LEFT_PAREN   @ 1
+LEFT_BRACE   @ 3
+COMMA        @ 5
+DOT          @ 7
+MINUS        @ 9
+PLUS         @11
+SEMICOLON    @13
+STAR         @15
+RIGHT_BRACE  @17
+RIGHT_PAREN  @19
+---
+EOF @ 1

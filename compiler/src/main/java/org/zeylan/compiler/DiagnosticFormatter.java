@@ -10,111 +10,84 @@ import org.jspecify.annotations.Nullable;
 import org.zeylan.compiler.util.Lists;
 
 public final class DiagnosticFormatter {
+    @FunctionalInterface
+    public interface OutputHandler {
+        void print(AttributedString string);
+
+        default void println() {
+            print(AttributedString.NEWLINE);
+        }
+
+        static OutputHandler of(Consumer<AttributedString> consumer) {
+            return consumer::accept;
+        }
+    }
 
     public record LineCol(int line, int col) {}
 
-    public static void format(Diagnostic diagnostic, @Nullable CharSequence source, Consumer<AttributedString> consumer) {
+    public static void format(Source source, Diagnostic diagnostic, OutputHandler out) {
         var severity = diagnostic.severity();
         var code = diagnostic.code();
         var message = diagnostic.message();
         var labels = diagnostic.labels();
         var suggestions = diagnostic.suggestions();
 
-        consumer.accept(formatHeader(severity, code, message));
+        out.print(formatHeader(severity, code, message));
 
         int lineNumWidth = 3;
-        var primaryLabel = Label.primary(labels).orElseGet(() -> Lists.head(labels));
+        var primaryLabel = Label.of(labels).orElseGet(() -> Lists.head(labels));
         if (primaryLabel != null) {
             var span = primaryLabel.span();
-            String fileContent = null;
-            String[] sourceLines = null;
-            var filepathStr = "<repl>";
+            var filepathStr = source.name();
+            var fileContent = source.content().toString();
 
-            if (source != null) {
-                fileContent = source.toString();
-                filepathStr = span.filepath() != null ? span.filepath().toString() : "<repl>";
-            } else if (span.filepath() != null) {
-                try {
-                    fileContent = java.nio.file.Files.readString(span.filepath());
-                    filepathStr = span.filepath().toString();
-                } catch (java.io.IOException e) {
-                    // fallback
+            var sourceLines = fileContent.lines().toArray(String[]::new);
+
+            // Calculate max line number width to ensure perfect vertical bar alignment
+            int maxLineNum = labels.stream()
+                    .mapToInt(label -> lineCol(fileContent, label.span().startOffset()).line() + 1)
+                    .max()
+                    .orElse(1);
+            lineNumWidth = Math.max(3, String.valueOf(maxLineNum).length());
+
+            var startLoc = lineCol(fileContent, span.startOffset());
+            out.print(formatLocation(filepathStr, startLoc.line() + 1, startLoc.col() + 1, lineNumWidth));
+            out.print(formatDivider(lineNumWidth));
+
+            var sortedLabels = new ArrayList<>(labels);
+            sortedLabels.sort((l1, l2) -> Integer.compare(l1.span().startOffset(), l2.span().startOffset()));
+
+            int lastLineIndex = -1;
+            for (var label : sortedLabels) {
+                var labelSpan = label.span();
+                var loc = lineCol(fileContent, labelSpan.startOffset());
+                int lineIndex = loc.line();
+                int colIndex = loc.col();
+
+                if (lineIndex >= 0 && lineIndex < sourceLines.length) {
+                    var lineStr = sourceLines[lineIndex];
+
+                    if (lineIndex != lastLineIndex) {
+                        out.print(formatSourceLine(lineIndex + 1, lineStr, lineNumWidth));
+                        lastLineIndex = lineIndex;
+                    }
+
+                    out.print(formatAnnotation(lineNumWidth, colIndex, labelSpan.length(), label.message(), severity, label.isPrimary(), lineStr));
                 }
             }
-
-            if (fileContent != null) {
-                sourceLines = fileContent.split("\\r?\\n", -1);
-
-                // Calculate max line number width to ensure perfect vertical bar alignment
-                int maxLineNum = 1;
-                for (var label : labels) {
-                    var loc = lineCol(fileContent, label.span().startOffset());
-                    if (loc.line() + 1 > maxLineNum) {
-                        maxLineNum = loc.line() + 1;
-                    }
-                }
-                lineNumWidth = Math.max(3, String.valueOf(maxLineNum).length());
-
-                var startLoc = lineCol(fileContent, span.startOffset());
-                consumer.accept(formatLocation(filepathStr, startLoc.line() + 1, startLoc.col() + 1, lineNumWidth));
-                consumer.accept(formatDivider(lineNumWidth));
-
-                var sortedLabels = new ArrayList<>(labels);
-                sortedLabels.sort((l1, l2) -> Integer.compare(l1.span().startOffset(), l2.span().startOffset()));
-
-                int lastLineIndex = -1;
-                for (var label : sortedLabels) {
-                    var labelSpan = label.span();
-                    var loc = lineCol(fileContent, labelSpan.startOffset());
-                    int lineIndex = loc.line();
-                    int colIndex = loc.col();
-
-                    if (lineIndex >= 0 && lineIndex < sourceLines.length) {
-                        var lineStr = sourceLines[lineIndex];
-
-                        if (lineIndex != lastLineIndex) {
-                            consumer.accept(formatSourceLine(lineIndex + 1, lineStr, lineNumWidth));
-                            lastLineIndex = lineIndex;
-                        }
-
-                        consumer.accept(formatAnnotation(lineNumWidth, colIndex, labelSpan.length(), label.message(), severity, label.isPrimary(), lineStr));
-                    }
-                }
-                consumer.accept(formatDivider(lineNumWidth));
-            } else {
-                filepathStr = span.filepath() != null ? span.filepath().toString() : "<anonymous>";
-                consumer.accept(formatLocation(filepathStr, span.line(), span.column(), lineNumWidth));
-            }
+            out.print(formatDivider(lineNumWidth));
         }
 
-        if (!suggestions.isEmpty()) {
-            for (var suggestion : suggestions) {
-                consumer.accept(formatSuggestion(suggestion, lineNumWidth));
-            }
-        }
+        final int finalLineNumWidth = lineNumWidth;
+        suggestions.forEach(suggestion -> out.print(formatSuggestion(suggestion, finalLineNumWidth)));
     }
 
     public static LineCol lineCol(String source, int startOffset) {
-        int line = 0;
-        int col = 0;
-        int offset = 0;
-        int len = source.length();
-        while (offset < startOffset && offset < len) {
-            var c = source.charAt(offset);
-            if (c == '\n') {
-                line++;
-                col = 0;
-            } else if (c == '\r') {
-                if (offset + 1 < len && source.charAt(offset + 1) == '\n') {
-                    offset++;
-                }
-                line++;
-                col = 0;
-            } else {
-                col++;
-            }
-            offset++;
-        }
+        var prefix = source.substring(0, Math.min(startOffset, source.length()));
+        var normalized = prefix.replace("\r\n", "\n").replace('\r', '\n');
+        int line = (int) normalized.chars().filter(c -> c == '\n').count();
+        int lastNewline = normalized.lastIndexOf('\n');
+        int col = lastNewline == -1 ? normalized.length() : normalized.length() - 1 - lastNewline;
         return new LineCol(line, col);
     }
 
@@ -127,12 +100,30 @@ public final class DiagnosticFormatter {
         };
     }
 
+    private static boolean useNerdFonts = false;
+
+    public static void setUseNerdFonts(boolean use) {
+        useNerdFonts = use;
+    }
+
+    public static boolean isUseNerdFonts() {
+        return useNerdFonts;
+    }
+
     public static String severityIcon(Diagnostic.Severity severity) {
-        return switch (severity) {
-            case ERROR -> "\uF057 ";
-            case WARNING -> "\uF071 ";
-            case NOTE, INFO -> "\uF05A ";
-        };
+        if (useNerdFonts) {
+            return switch (severity) {
+                case ERROR -> "\uF057 ";
+                case WARNING -> "\uF071 ";
+                case NOTE, INFO -> "\uF05A ";
+            };
+        } else {
+            return switch (severity) {
+                case ERROR -> "\u2717 ";
+                case WARNING -> "\u26A0 ";
+                case NOTE, INFO -> "\u2139 ";
+            };
+        }
     }
 
     public static AttributedString formatHeader(Diagnostic.Severity severity, Diagnostic.Code code, String message) {
@@ -175,25 +166,16 @@ public final class DiagnosticFormatter {
         var emptyLineNum = String.format("%" + lineNumWidth + "s", "");
         sb.style(boldBlue).append(emptyLineNum).append(" | ").style(AttributedStyle.DEFAULT);
 
-        var align = new StringBuilder();
-        for (int i = 0; i < colIndex && i < lineStr.length(); i++) {
-            var c = lineStr.charAt(i);
-            if (c == '\t') {
-                align.append('\t');
-            } else {
-                align.append(' ');
-            }
+        int limit = Math.min(colIndex, lineStr.length());
+        var align = lineStr.substring(0, limit).replaceAll("[^\t]", " ");
+        if (colIndex > limit) {
+            align += " ".repeat(colIndex - limit);
         }
-        sb.append(align.toString());
+        sb.append(align);
 
         var underlineStyle = isPrimary ? severityStyle(severity) : AttributedStyle.DEFAULT.bold().foreground(AttributedStyle.CYAN);
-        var underlineChar = '^';
-
-        int underlineLen = Math.clamp(length, 1, lineStr.length() - colIndex);
-        sb.style(underlineStyle);
-        for (int i = 0; i < underlineLen; i++) {
-            sb.append(underlineChar);
-        }
+        int underlineLen = colIndex < lineStr.length() ? Math.clamp(length, 1, lineStr.length() - colIndex) : 1;
+        sb.style(underlineStyle).append("^".repeat(underlineLen));
 
         if (labelMessage != null && !labelMessage.isEmpty()) {
             sb.append(" ").append(labelMessage);
