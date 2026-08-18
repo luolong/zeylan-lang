@@ -2,9 +2,9 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "Run Zeylan REPL (Native)",
+      "label": "Run Bourbon REPL (Native)",
       "type": "shell",
-      "command": "mise run zeylan",
+      "command": "mise run bourbon",
       "problemMatcher": [],
       "group": {
         "kind": "test",
@@ -16,9 +16,9 @@
       }
     },
     {
-      "label": "Run Zeylan REPL (JVM)",
+      "label": "Run Bourbon REPL (JVM)",
       "type": "shell",
-      "command": "mise run zeylan-jvm",
+      "command": "mise run bourbon-jvm",
       "problemMatcher": [],
       "presentation": {
         "focus": true,

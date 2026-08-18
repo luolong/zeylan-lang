@@ -13,7 +13,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.function.Executable;
-import org.bourbon.compiler.ScannerTestContextProvider.ScannerTestCase;
 import org.bourbon.compiler.junit.ListAssert;
 
 @NullMarked

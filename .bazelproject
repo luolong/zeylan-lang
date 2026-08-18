@@ -5,10 +5,10 @@ directories:
   -bazel-bin
   -bazel-out
   -bazel-testlogs
-  -bazel-zeylan-lang
   -node_modules
   -build
   -.mise
 test_sources:
   compiler/src/test/java
-java_language_level: 25
+
+try_import .bazelproject.user

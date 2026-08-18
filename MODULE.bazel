@@ -1,8 +1,13 @@
 "Bazel dependencies, see https://registry.bazel.build"
 
+module(
+    name = "bourbon",
+    version = "0.0.1",
+)
+
 bazel_dep(name = "rules_graalvm", version = "0.11.1")
 bazel_dep(name = "rules_java", version = "9.7.0")
-bazel_dep(name = "rules_jvm_external", version = "6.7")
+bazel_dep(name = "rules_jvm_external", version = "6.10")
 bazel_dep(name = "contrib_rules_jvm", version = "0.34.0")
 
 # Pin rules_go and rules_android to compatible versions. They are pulled in transitively
@@ -10,6 +15,7 @@ bazel_dep(name = "contrib_rules_jvm", version = "0.34.0")
 # use deprecated APIs (like CcInfo) incompatible with modern Bazel.
 bazel_dep(name = "rules_go", version = "0.60.0")
 bazel_dep(name = "rules_android", version = "0.7.3")
+bazel_dep(name = "rules_shell", version = "0.6.1")
 
 # Setup GraalVM Toolchain (Java 25 Community Edition)
 gvm = use_extension("@rules_graalvm//:extensions.bzl", "graalvm")

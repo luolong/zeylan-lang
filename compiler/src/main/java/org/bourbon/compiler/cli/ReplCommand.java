@@ -8,7 +8,6 @@ import org.jline.reader.EndOfFileException;
 import org.jline.reader.LineReader;
 import org.jline.reader.LineReaderBuilder;
 import org.jline.reader.UserInterruptException;
-import org.jline.terminal.Terminal;
 import org.jline.terminal.TerminalBuilder;
 import org.bourbon.compiler.Diagnostic;
 import org.bourbon.compiler.DiagnosticFormatter;
@@ -24,13 +23,14 @@ import picocli.CommandLine.Command;
     mixinStandardHelpOptions = true
 )
 public final class ReplCommand implements Callable<Integer> {
-    final String prompt1 = "\u0001\u001B[30;44m\u0002 󰟆 bourbon\u0001\u001B[0;34m\u0002\uE0B0\u0001\u001B[0m\u0002 ";
-    final String prompt2 = "\u0001\u001B[30;44m\u0002 󰟆    ...\u0001\u001B[0;34m\u0002\uE0B0\u0001\u001B[0m\u0002 ";
+    private static final String VANILLA_POD = Character.toString(0xf366);
+    final String prompt1 = "\u0001\u001B[30;44m\u0002 " + VANILLA_POD + " bourbon\u0001\u001B[0;34m\u0002\uE0B0\u0001\u001B[0m\u0002 ";
+    final String prompt2 = "\u0001\u001B[30;44m\u0002 " + VANILLA_POD + "     ...\u0001\u001B[0;34m\u0002\uE0B0\u0001\u001B[0m\u0002 ";
 
     @Override
     public Integer call() {
-        DiagnosticFormatter.setUseNerdFonts(true);
-        if (System.console() == null) {
+        DiagnosticFormatter.useNerdFonts(true);
+        if (System.console() == null || !System.console().isTerminal()) {
             System.err.println("Error: The Bourbon REPL requires an interactive TTY environment and cannot be run in a non-interactive console.");
             System.err.println("Please run the REPL from a native terminal.");
             return Sysexits.EX_UNAVAILABLE;

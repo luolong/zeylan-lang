@@ -1,7 +1,17 @@
 package org.bourbon.compiler;
 
+import static org.bourbon.compiler.TokenType.COMMA;
+import static org.bourbon.compiler.TokenType.EOF;
+import static org.bourbon.compiler.TokenType.LEFT_BRACE;
+import static org.bourbon.compiler.TokenType.NUMBER;
+import static org.bourbon.compiler.TokenType.RIGHT_BRACE;
+import static org.bourbon.compiler.TokenType.SEMICOLON;
+import static org.bourbon.compiler.TokenType.STRING;
 import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import java.util.List;
 
 import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.Assumptions;
@@ -11,9 +21,8 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
-import org.bourbon.compiler.ScannerTestContextProvider.ScannerTestCase;
 
-public class TestCaseParserTest {
+public class ScannerTestCaseParserTest {
 
     static final String VALID_TEST_CASE = """
             ==========================================
@@ -21,20 +30,29 @@ public class TestCaseParserTest {
             ==========================================
             // Simple line comment skipped
             {}; "Hello"
-            42
+            42 @,
             ---
             ---
             LEFT_BRACE @ 1
             RIGHT_BRACE } @ 2
-            SEMICOLON ; @ 3 [..4]
-            STRING '"Hello"' "Hello" @ 5 [35..42]
+            SEMICOLON ; @ 3 [34..35]
+            STRING '"Hello"' "Hello" @ 5 [36..43]
             ---
-            NUMBER 42 42.0 @ 13 [43..45]
+            NUMBER 42 42.0 @ 13 [44..46]
+            ✗ error[BCE000100]: Unexpected character
+              --> <VALID_TEST_CASE>:3:4
+                |
+              3 | 42 @
+                |    ^ Unexpected symbol
+                |
+            COMMA @ 5
+            ---
+            EOF @ 1
             """;
 
     static final int HEADER_SEPARATOR_LENGTH = 42;
     static final int SOURCE_BLOCK_START = 3 * (HEADER_SEPARATOR_LENGTH + 1);
-    static final int SOURCE_BLOCK_LENGTH = 46;
+    static final int SOURCE_BLOCK_LENGTH = 49;
     static final int SOURCE_BLOCK_END = SOURCE_BLOCK_START + SOURCE_BLOCK_LENGTH;
 
     @Nested
@@ -76,7 +94,7 @@ public class TestCaseParserTest {
 
     @Nested
     @DisplayName("Test Case Parser")
-    class ParseTestCaseTest {
+    class TestCaseParserTest {
 
         private ScannerTestCaseParser parser;
         private ScannerTestCase testCase;
@@ -102,6 +120,39 @@ public class TestCaseParserTest {
             assertEquals(expectedTestCaseInput, testCase.input(), "Input");
         }
 
+        @Test
+        void getTokens() {
+            var parsedTokens = testCase.expectedTokens();
+            assertEquals(7, parsedTokens.size(), "Parsed token count");
+
+            var actualTokenTypes = parsedTokens.stream().map(Token::type).toArray(TokenType[]::new);
+            assertArrayEquals(new TokenType[]{LEFT_BRACE, RIGHT_BRACE, SEMICOLON, STRING, NUMBER, COMMA, EOF}, actualTokenTypes, "Token types");
+        }
+
+        @Test
+        void getDiagnostic() {
+            var parserDiagnostics = testCase.expectedDiagnostics();
+            assertEquals(1, parserDiagnostics.size(), "Diagnostic count");
+
+            var diagnostic = parserDiagnostics.getFirst();
+            assertAll("Parsed diagnbostic",
+                    () -> assertEquals(Diagnostic.Severity.ERROR, diagnostic.severity(), "severity"),
+                    () -> assertEquals(Diagnostic.Code.ScannerUnexpectedCharacter, diagnostic.code(), "code"),
+                    () -> assertEquals("Unexpected character", diagnostic.message(), "message"),
+                    () -> {
+                        var labels = diagnostic.labels();
+                        var label = labels.getFirst();
+                        assertAll("Labels",
+                                () -> assertEquals(1, labels.size(), "count"),
+                                () -> assertEquals("<VALID_TEST_CASE>", label.span().name().name(), "label source"),
+                                () -> assertEquals(3, label.span().line(), "label line"),
+                                () -> assertEquals(3, label.span().column(), "label column"),
+                                () -> assertEquals(1, label.span().length(), "label length"),
+                                () -> assertEquals("Unexpected symbol", label.message(), "label message")
+                        );
+                    }
+            );
+        }
     }
 
     private static @NonNull Source getSource() {

@@ -113,9 +113,29 @@ public class Source implements CharSequence {
         return charAt(current) == expected;
     }
 
+    public boolean peek(CharSequence expected) {
+        if (isAtEnd())
+            return false;
+
+        for (int i = 0; i < expected.length(); i++) {
+            if (charAt(current + i) != expected.charAt(i))
+                return false;
+        }
+        return true;
+    }
+
     public boolean match(char expected) {
         if (peek(expected)) {
             current++;
+            return true;
+        }
+
+        return false;
+    }
+
+    public boolean match(CharSequence expected) {
+        if (peek(expected)) {
+            current += expected.length();
             return true;
         }
 

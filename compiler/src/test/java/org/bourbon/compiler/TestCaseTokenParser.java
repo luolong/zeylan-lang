@@ -58,7 +58,6 @@ import static org.bourbon.compiler.TokenType.TRIPLE_EQUAL;
 import java.util.Map;
 
 import org.jspecify.annotations.Nullable;
-import org.junit.jupiter.api.extension.TestInstantiationException;
 
 public class TestCaseTokenParser {
     private static final Map<TokenType, String> DEFAULT_LEXEMES = Map.<TokenType, String>ofEntries(
@@ -132,12 +131,7 @@ public class TestCaseTokenParser {
     }
 
     public static Token parse(Source source, int lineNumber, int lineOffset) {
-        try {
-            return new TestCaseTokenParser(source, lineNumber, lineOffset).parseToken();
-        } catch (TestCaseTokenParserException e) {
-            DiagnosticFormatter.format(source, e.toDiagnostic(), System.err::println);
-            throw new TestInstantiationException("Failed to parse token spec", e);
-        }
+        return new TestCaseTokenParser(source, lineNumber, lineOffset).parseToken();
     }
 
     private Token parseToken() {
@@ -158,12 +152,41 @@ public class TestCaseTokenParser {
 
         consumeAtCharacter();
 
-        int columnNumber = consumeColumnNumber();
+        int columnNumber = consumeNumber("column number");
 
         int startOffset = lineOffset + columnNumber - 1;
         int length = lexeme.length();
 
+        char c = skipWhitespace();
+        if (c == '[') {
+            source.tokenStart();
+            startOffset = consumeNumber("start offset");
+            consumeRangeSeparator();
+            int endOffset = consumeNumber("end offset");
+            length = endOffset - startOffset;
+            consumeClosingBracket();
+            c = skipWhitespace();
+        }
+
+        if (c != '\n' && c != '\0') {
+            throw new TestCaseTokenParserException(source.currentSpan(), "Expected source span range starting with '[' or end of line");
+        }
+
         return new Token(type, lexeme, literal, lineNumber, columnNumber, startOffset, length);
+    }
+
+    private void consumeClosingBracket() {
+        if (!source.match(']')) {
+            throw new TestCaseTokenParserException(source.currentSpan(), "Expected closing bracket ']' to complete the source range");
+        }
+        source.tokenStart();
+    }
+
+    private void consumeRangeSeparator() {
+        if (!source.match("..")) {
+            throw new TestCaseTokenParserException(source.currentSpan(), "Expected '..' range separator");
+        }
+        source.tokenStart();
     }
 
     private void consumeAtCharacter() {
@@ -172,12 +195,12 @@ public class TestCaseTokenParser {
         source.tokenStart();
     }
 
-    private int consumeColumnNumber() {
+    private int consumeNumber(String numberRole) {
         char c = requireNotEnd(skipWhitespace());
-        if  (!isDigit(c)) throw new TestCaseTokenParserException(source.currentSpan(), "Expected token column number");
+        if  (!isDigit(c)) throw new TestCaseTokenParserException(source.currentSpan(), "Expected token " + numberRole);
         while (!isAtEnd() && isDigit(source.peek())) source.advance();
         String lexeme = source.lexeme();
-        source.tokenReset();
+        source.tokenStart();
         return Integer.parseInt(lexeme);
     }
 
@@ -185,11 +208,43 @@ public class TestCaseTokenParser {
         return '0' <= c && c <= '9';
     }
 
-    private Object parseLiteral(TokenType type, String lexeme) {
-        return null;
+    private @Nullable Object consumeLiteral() {
+        String lexeme = consumeLexeme();
+        if (lexeme == null) return null;
+        if (lexeme.isBlank()) return null;
+
+        if (lexeme.startsWith("\"") && lexeme.endsWith("\"")) {
+            return lexeme.substring(1, lexeme.length() - 1);
+        }
+
+        if (lexeme.startsWith("'") && lexeme.endsWith("'")) {
+            return lexeme.substring(1, lexeme.length() - 1);
+        }
+
+        if (lexeme.startsWith("0x") && lexeme.length() > 2) {
+            return Integer.parseInt(lexeme.substring(2), 16);
+        }
+
+        if (lexeme.startsWith("0b") && lexeme.length() > 2) {
+            return Integer.parseInt(lexeme.substring(2), 2);
+        }
+
+        if (lexeme.startsWith("0") && lexeme.length() > 1) {
+            return Integer.parseInt(lexeme.substring(1), 8);
+        }
+
+        if (lexeme.matches("-?\\d+(\\.\\d+)?")) {
+            return Double.parseDouble(lexeme);
+        }
+
+        return lexeme;
     }
 
-    private @Nullable Object consumeLiteral() {
+    private Object parseLiteral(TokenType type, String lexeme) {
+        if (type == TokenType.STRING) {
+            return lexeme.substring(1, lexeme.length() - 1);
+        }
+
         return null;
     }
 

@@ -18,8 +18,6 @@ import org.bourbon.compiler.Source.Content;
 @NullMarked
 public class ScannerTestContextProvider implements TestTemplateInvocationContextProvider {
 
-    public record ScannerTestCase(String input, List<Token> expectedTokens, List<Diagnostic> diagnostics) {}
-
     @Override
     public boolean supportsTestTemplate(ExtensionContext unused) {
         return true;
@@ -27,8 +25,16 @@ public class ScannerTestContextProvider implements TestTemplateInvocationContext
 
     @Override
     public Stream<? extends TestTemplateInvocationContext> provideTestTemplateInvocationContexts(ExtensionContext context) {
-        return TestCaseDiscovery.of(context).streamResources("/scanner", this::isValidTestCase)
-                .map(this::scannerTestContext);
+        var testCaseFilter = System.getProperty("scanner.test.case");
+
+        var testResources = TestCaseDiscovery.of(context)
+                .streamResources("/scanner", this::isValidTestCase);
+
+        if (testCaseFilter != null && !testCaseFilter.isBlank()) {
+            testResources = testResources.filter(resource -> resource.getName().endsWith(testCaseFilter));
+        }
+
+        return testResources.map(this::scannerTestContext);
     }
 
     private TestTemplateInvocationContext scannerTestContext(Resource resource) {
@@ -47,7 +53,7 @@ public class ScannerTestContextProvider implements TestTemplateInvocationContext
     }
 
     private boolean isValidTestCase(Resource resource) {
-        return resource.getName().endsWith(".txt");
+        return resource.getName().endsWith(".bourbon.txt");
     }
 
     private TestTemplateInvocationContext scannerTestContext(String displayName, ScannerTestCase testCase) {

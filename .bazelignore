@@ -1,7 +1,8 @@
 .mise
 node_modules
 build
+bazel-bourbon-lang
 bazel-bin
 bazel-out
 bazel-testlogs
-bazel-zeylan-lang
+

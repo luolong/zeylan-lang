@@ -4,11 +4,11 @@
     {
       "type": "node",
       "request": "launch",
-      "name": "Zeylan REPL (Native)",
+      "name": "Bourbon REPL (Native)",
       "runtimeExecutable": "mise",
       "runtimeArgs": [
         "run",
-        "zeylan"
+        "bourbon"
       ],
       "console": "integratedTerminal",
       "internalConsoleOptions": "neverOpen"
@@ -16,11 +16,11 @@
     {
       "type": "node",
       "request": "launch",
-      "name": "Zeylan REPL (JVM)",
+      "name": "Bourbon REPL (JVM)",
       "runtimeExecutable": "mise",
       "runtimeArgs": [
         "run",
-        "zeylan-jvm"
+        "bourbon-jvm"
       ],
       "console": "integratedTerminal",
       "internalConsoleOptions": "neverOpen"

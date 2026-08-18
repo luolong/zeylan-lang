@@ -2,8 +2,14 @@ package org.bourbon.compiler;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.nio.file.Path;import java.util.List;
+import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.bourbon.compiler.SourceSpan.SourceName;
 
@@ -34,30 +40,30 @@ public record Diagnostic(
     ///                         These include typechecker diagnostics, linting notices, correctness issues, improvement suggestions, etc.
     public enum Code {
         /// Marker exception for pieces of code that are not implemented yet.
-        NotImplemented("BRB000000"),
+        NotImplemented("BCE000000"),
 
         /// Internal diagnostic message to be printed if Scanner test cases fail to be parsed.
         ///
         /// This is an internal exception signaling that compiler scanner tests failed due to invalid or malformed test cases.
-        ScannerTestCaseParserError("BRB000001"),
+        ScannerTestCaseParserError("BCE000001"),
 
         /// File not found.
         ///
         /// Returned by whenever the compiler tries to access a file and fails to open it at an expected location.
         /// This is a compiler internal error, signifying inability to complete the compilation process due to a missing or unreachable file.
-        IoFileNotFound("ZSC000010"),
+        IoFileNotFound("BCE000010"),
 
         /// Generic IO error occurred.
         ///
         /// An unexpected IO exception occurred while trying to access IO-bound resources.
         /// This is a compiler internal error, signifying inability to complete the compilation process due to unexpected IO issues.
-        IoError("ZSC000019"),
+        IoError("BCE000019"),
 
         /// Unexpected character while scanning the source
-        ScannerUnexpectedCharacter("ZSC000100"),
+        ScannerUnexpectedCharacter("BCE000100"),
 
         /// Unbalanced multiline comment
-        ScannerUnbalancedMultilineComment("ZSC000101");
+        ScannerUnbalancedMultilineComment("BCE000101");
 
         Code(String code) {
             this.code = code;
@@ -68,13 +74,30 @@ public record Diagnostic(
         public String code() {
             return code;
         }
-    }
-    public enum Severity {
-        ERROR,
-        WARNING,
-        NOTE,
-        INFO;
 
+        private static final Map<String, Code> CODES = Arrays.stream(values())
+                .collect(Collectors.toMap(Code::code, Function.identity()));
+
+        public static Code fromCode(String value) {
+            var code = CODES.get(value);
+            if (code == null) {
+                throw new IllegalArgumentException("Unknown diagnostic code: " + value);
+            }
+
+            return code;
+        }
+    }
+
+    public enum Severity {
+        ERROR, WARNING, NOTE, INFO;
+        public static String[] names() {
+            var values = values();
+            var names = new String[values.length];
+            for (var i = 0; i < names.length; i++) {
+                names[i] = values[i].name();
+            }
+            return names;
+        }
     }
 
     public static Diagnostic error(Code code, String message, List<Label> labels) {

@@ -10,6 +10,89 @@ import org.jspecify.annotations.Nullable;
 import org.bourbon.compiler.util.Lists;
 
 public final class DiagnosticFormatter {
+    sealed interface Symbol extends CharSequence {
+        CharSequence symbol();
+
+        @Override
+        default int length() {
+            return symbol().length();
+        }
+
+        @Override
+        default char charAt(int index) {
+            return symbol().charAt(index);
+        }
+
+        @Override
+        default CharSequence subSequence(int start, int end) {
+            return symbol().subSequence(start, end);
+        }
+
+        enum NerdFont implements Symbol {
+
+            ERROR("\uF057 "),
+            WARNING("\uF071 "),
+            NOTE("\uF05A "),
+            INFO("\uF05A ");
+
+            private final String symbol;
+
+            NerdFont(String symbol) {
+                this.symbol = symbol;
+            }
+
+            @Override
+            public CharSequence symbol() {
+                return symbol;
+            }
+
+            @Override
+            public String toString() {
+                return symbol;
+            }
+
+            public static NerdFont valueOf(Diagnostic.Severity severity) {
+                return switch (severity) {
+                    case ERROR -> ERROR;
+                    case WARNING -> WARNING;
+                    case NOTE -> NOTE;
+                    case INFO -> INFO;
+                };
+            }
+        }
+
+        enum Unicode implements Symbol {
+            ERROR("✗ "),
+            WARNING("⚠ "),
+            NOTE("ℹ "),
+            INFO("ℹ ");
+
+            private final String symbol;
+
+            Unicode(String symbol) {
+                this.symbol = symbol;
+            }
+
+            @Override public CharSequence symbol() {
+                return symbol;
+            }
+
+            @Override
+            public String toString() {
+                return symbol;
+            }
+
+            public static Unicode valueOf(Diagnostic.Severity severity) {
+                return switch (severity) {
+                    case ERROR -> ERROR;
+                    case WARNING -> WARNING;
+                    case NOTE -> NOTE;
+                    case INFO -> INFO;
+                };
+            }
+        }
+    }
+
     @FunctionalInterface
     public interface OutputHandler {
         void print(AttributedString string);
@@ -102,27 +185,15 @@ public final class DiagnosticFormatter {
 
     private static boolean useNerdFonts = false;
 
-    public static void setUseNerdFonts(boolean use) {
+    public static void useNerdFonts(boolean use) {
         useNerdFonts = use;
     }
 
-    public static boolean isUseNerdFonts() {
-        return useNerdFonts;
-    }
-
-    public static String severityIcon(Diagnostic.Severity severity) {
+    public static CharSequence severityIcon(Diagnostic.Severity severity) {
         if (useNerdFonts) {
-            return switch (severity) {
-                case ERROR -> "\uF057 ";
-                case WARNING -> "\uF071 ";
-                case NOTE, INFO -> "\uF05A ";
-            };
+            return Symbol.NerdFont.valueOf(severity);
         } else {
-            return switch (severity) {
-                case ERROR -> "\u2717 ";
-                case WARNING -> "\u26A0 ";
-                case NOTE, INFO -> "\u2139 ";
-            };
+            return Symbol.Unicode.valueOf(severity);
         }
     }
 

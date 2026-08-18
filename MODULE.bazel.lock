@@ -347,7 +347,7 @@
     "@@rules_graalvm+//:extensions.bzl%graalvm": {
       "general": {
         "bzlTransitiveDigest": "YEZMyvwrR60IthBhvLQfoUh7JqMArJV9zcmDhWZ/HaQ=",
-        "usagesDigest": "jlJhsSYU6gRz+ZRwBeHkc4PCg2u+X1q+xxiHYusERsM=",
+        "usagesDigest": "8g+7Gguqdrz+V1uGtArYPGmhcDvYEB3Jf40OAg/jG4g=",
         "recordedInputs": [
           "REPO_MAPPING:rules_graalvm+,bazel_skylib bazel_skylib+"
         ],
