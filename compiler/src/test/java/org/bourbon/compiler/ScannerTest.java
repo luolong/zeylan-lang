@@ -8,6 +8,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.bourbon.compiler.effects.Effects;
 import org.jspecify.annotations.NullMarked;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.TestTemplate;
@@ -24,17 +25,18 @@ class ScannerTest {
     @ExtendWith(ScannerTestContextProvider.class)
     public void scanTokens(ScannerTestCase testCase) {
         //noinspection ConstantValue
-        if (testCase instanceof ScannerTestCase(String input, List<Token> expectedTokens, List<Diagnostic> expectedDiagnostics)) {
+        if (testCase instanceof ScannerTestCase(Source source, List<Token> expectedTokens, List<Diagnostic> expectedDiagnostics)) {
             var actualDiagnostics = new ArrayList<Diagnostic>();
-            var reporter = new DiagnosticReporter() {
+            var reporter = new DiagnosticReporter.Handler() {
                 @Override
                 public void report(Diagnostic diagnostic) {
                     actualDiagnostics.add(diagnostic);
                 }
             };
 
-            var scanner = new Scanner(Source.of(input), reporter);
-            var actualTokens = scanner.scanTokens();
+            var actualTokens = Effects.handle(() -> Scanner.scanTokens(source))
+                    .with(DiagnosticReporter.Handler.class, reporter)
+                    .get();
 
             var assertions = new ArrayList<Executable>();
             assertions.add(() -> assertAll("Tokens", assertTokens(expectedTokens, actualTokens)));

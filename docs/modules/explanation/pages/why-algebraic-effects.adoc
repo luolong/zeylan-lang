@@ -100,7 +100,7 @@ Lifetimes and scopes are naturally managed by the call stack.
 
 | *Return Types*
 | Wrapper types (`Promise<T>`, `Task<T>`, `Flux<T>`).
-| Plain types (`T`). Capability is in the effect row.
+| Plain types (`E`). Capability is in the effect row.
 
 | *Dependency Injection*
 | Runtime reflection, DI container configurations, and annotations.

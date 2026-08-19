@@ -60,12 +60,15 @@ import java.util.List;
 public class Scanner {
 
     private final Source source;
-    private final DiagnosticReporter diagnosticReporter;
     private final List<Token> tokens = new ArrayList<>();
 
-    public Scanner(Source source, DiagnosticReporter diagnosticReporter) {
+    public static List<Token> scanTokens(Source source) {
+        var scanner = new Scanner(source);
+        return scanner.scanTokens();
+    }
+
+    public Scanner(Source source) {
         this.source = source;
-        this.diagnosticReporter = diagnosticReporter;
     }
 
     public List<Token> scanTokens() {
@@ -280,7 +283,7 @@ public class Scanner {
 
             // Rest
             default ->
-                diagnosticReporter.report(Diagnostic.Scanner.unexpectedCharacter(source.currentSpan()));
+                DiagnosticReporter.report(Diagnostic.Scanner.unexpectedCharacter(source.currentSpan()));
         }
     }
 
@@ -302,7 +305,7 @@ public class Scanner {
             }
         }
 
-        diagnosticReporter.report(Diagnostic.Scanner.unbalancedMultilineComment(
+        DiagnosticReporter.report(Diagnostic.Scanner.unbalancedMultilineComment(
                 start, source.spanAt(source.current(), 1)));
     }
 

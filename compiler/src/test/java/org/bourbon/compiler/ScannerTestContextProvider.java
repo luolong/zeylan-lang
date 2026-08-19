@@ -1,9 +1,14 @@
 package org.bourbon.compiler;
 
 import java.io.IOException;
+import java.io.StringWriter;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
+import org.bourbon.compiler.effects.Effects;
 import org.jspecify.annotations.NullMarked;
 import org.junit.jupiter.api.extension.Extension;
 import org.junit.jupiter.api.extension.ExtensionContext;
@@ -34,26 +39,27 @@ public class ScannerTestContextProvider implements TestTemplateInvocationContext
             testResources = testResources.filter(resource -> resource.getName().endsWith(testCaseFilter));
         }
 
-        return testResources.map(this::scannerTestContext);
-    }
-
-    private TestTemplateInvocationContext scannerTestContext(Resource resource) {
-        try (var in = resource.getInputStream()) {
-            var source = Source.named(resource.getName()).of(Content.read(in));
-            var parser = new ScannerTestCaseParser(source);
-
-            var testCase = parser.parseTestCase();
-            var displayName = parser.getDisplayName();
-
-            return scannerTestContext(displayName, testCase);
-        }
-        catch (IOException e) {
-            throw new TestInstantiationException("Failed to load scanner test case", e);
-        }
+        return testResources.map(resource -> scannerTestContext(context, resource));
     }
 
     private boolean isValidTestCase(Resource resource) {
         return resource.getName().endsWith(".bourbon.txt");
+    }
+
+    private TestTemplateInvocationContext scannerTestContext(ExtensionContext context, Resource resource) {
+        try (var in = resource.getInputStream()) {
+            var source = Source.named(resource.getName()).of(Content.read(in));
+            var parser = new ScannerTestCaseParser(source);
+
+            var testCase = Effects.handle(parser::parseTestCase).with(
+                    DiagnosticReporter.Handler.class, diagnostic -> DiagnosticFormatter.format(source, diagnostic, System.err::print))
+                    .get();
+
+            return scannerTestContext(parser.getDisplayName(), testCase);
+        }
+        catch (IOException e) {
+            throw new TestInstantiationException("Failed to load scanner test case", e);
+        }
     }
 
     private TestTemplateInvocationContext scannerTestContext(String displayName, ScannerTestCase testCase) {

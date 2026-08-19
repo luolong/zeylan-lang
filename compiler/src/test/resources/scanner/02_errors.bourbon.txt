@@ -4,8 +4,8 @@ Unexpected Character
 ( @ )
 ---
 LEFT_PAREN @1
-✗ error[ZSC0100]: Unexpected character
-  --> <repl>:1:3
+✗ error[BCE000100]: Unexpected character
+  --> 02_errors.bourbon.txt:1:3
     |
   1 | ( @ )
     |   ^ Unexpected symbol

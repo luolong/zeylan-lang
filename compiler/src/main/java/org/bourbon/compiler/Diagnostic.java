@@ -30,6 +30,10 @@ public record Diagnostic(
         this(code, severity, message, labels, List.of());
     }
 
+    public boolean isError() {
+        return severity == Severity.ERROR;
+    }
+
     /// Code for compiler pipeline diagnostic messages.
     ///
     /// The codes are roughly divided into several subcategories:
@@ -102,6 +106,16 @@ public record Diagnostic(
 
     public static Diagnostic error(Code code, String message, List<Label> labels) {
         return new Diagnostic(code, Severity.ERROR, message, labels);
+    }
+    public static Diagnostic error(Code code, String message, List<Label> labels, List<String> suggestions) {
+        return new Diagnostic(code, Severity.ERROR, message, labels, suggestions);
+    }
+
+    public static Diagnostic warning(Code code, String message, List<Label> labels) {
+        return new Diagnostic(code, Severity.WARNING, message, labels);
+    }
+    public static Diagnostic warning(Code code, String message, List<Label> labels, List<String> suggestions) {
+        return new Diagnostic(code, Severity.WARNING, message, labels, suggestions);
     }
 
 

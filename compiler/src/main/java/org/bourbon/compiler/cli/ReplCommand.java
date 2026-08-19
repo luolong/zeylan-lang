@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.concurrent.Callable;
 
+import org.bourbon.compiler.DiagnosticReporter;
+import org.bourbon.compiler.effects.Effects;
 import org.jline.reader.EndOfFileException;
 import org.jline.reader.LineReader;
 import org.jline.reader.LineReaderBuilder;
@@ -72,8 +74,9 @@ public final class ReplCommand implements Callable<Integer> {
                 var source = Source.of(line);
 
                 var diagnostics = new ArrayList<Diagnostic>();
-                var scanner = new Scanner(source, diagnostics::add);
-                var tokens = scanner.scanTokens();
+                var tokens = Effects.handle(() -> Scanner.scanTokens(source))
+                        .with(DiagnosticReporter.Handler.class, diagnostics::add)
+                        .get();
 
                 for (var diagnostic: diagnostics) {
                     DiagnosticFormatter.format(source, diagnostic,

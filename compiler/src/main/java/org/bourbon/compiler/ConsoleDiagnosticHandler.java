@@ -4,7 +4,7 @@ import java.io.Console;
 
 import org.bourbon.compiler.DiagnosticFormatter.OutputHandler;
 
-public class ConsoleDiagnosticHandler implements DiagnosticReporter {
+public class ConsoleDiagnosticHandler implements DiagnosticReporter.Handler {
 
     private final Source source;
     private final OutputHandler out;

@@ -1,20 +1,29 @@
 package org.bourbon.compiler;
 
+import static java.util.stream.Collectors.joining;
+
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Locale;
 import java.util.function.Supplier;
 
+import org.bourbon.compiler.Diagnostic.Code;
 import org.bourbon.compiler.Diagnostic.Severity;
 import org.bourbon.compiler.DiagnosticFormatter.Symbol.NerdFont;
 import org.bourbon.compiler.DiagnosticFormatter.Symbol.Unicode;
 import org.bourbon.compiler.SourceSpan.SourceName;
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
+import org.junit.jupiter.api.extension.TestInstantiationException;
 
 public class TestCaseDiagnosticParser {
 
     private final Source source;
     private final int lineNumber;
     private final int lineOffset;
+
+    private final DiagnosticReportWrapper Report = new DiagnosticReportWrapper();
 
     public TestCaseDiagnosticParser(Source source, int lineNumber, int lineOffset) {
         this.source = source;
@@ -47,9 +56,9 @@ public class TestCaseDiagnosticParser {
         var code = consumeCode();
         var message = consumeMessage();
 
-        String sourceFileName = null;
-        int primaryColumn = -1;
+        String sourceFileName;
         int primaryLine = lineNumber;
+        int primaryColumn;
 
         var labels = new ArrayList<Label>();
         while (!source.isAtEnd()) {
@@ -66,7 +75,7 @@ public class TestCaseDiagnosticParser {
             while (!source.isAtEnd()) {
                 switch (consumeSourceLabel()) {
                     case LabelResult.Some(int labelLine, int labelColumn, int spanLength, String labelMessage) -> {
-                        var startOffset = lineOffset + labelColumn;
+                        var startOffset = lineOffset + labelColumn - 1;
                         var sourceSpan = new SourceSpan(SourceName.of(sourceFileName), labelLine, labelColumn, startOffset, spanLength);
                         var isPrimary = labelLine == primaryLine && labelColumn == primaryColumn;
                         labels.add(new Label(sourceSpan, labelMessage, isPrimary));
@@ -86,17 +95,14 @@ public class TestCaseDiagnosticParser {
             skipBlankLines();
         }
 
-        if (labels.isEmpty()) {
-            throw Exceptions.expectLabels(source.currentSpan());
-        }
-
+        if (labels.isEmpty()) throw Report.expectLabels();
         return new Diagnostic(code, severity, message, labels);
     }
 
     private int consumeLineNumber(int primaryLine) {
         int lineNumber = consumeInteger();
         if (primaryLine != lineNumber) {
-            // TODO: Issue a warning
+            Report.primaryLineNumberMismatch(primaryLine, lineNumber);
         }
         return lineNumber;
     }
@@ -109,7 +115,7 @@ public class TestCaseDiagnosticParser {
             source.tokenStart();
             return integer;
         } catch (NumberFormatException e) {
-            throw Exceptions.expectInteger(source.currentSpan());
+            throw Report.expecInteger();
         }
     }
 
@@ -117,7 +123,7 @@ public class TestCaseDiagnosticParser {
         advanceUntilMatch(':');
         var sourceFileName = source.lexeme();
         if (sourceFileName.isBlank())
-            throw Exceptions.expectSourceFileName(source.currentSpan());
+            throw Report.expectSourceFileName();
 
         return sourceFileName.trim();
     }
@@ -191,8 +197,8 @@ public class TestCaseDiagnosticParser {
     private int consumeUnderlineIndent() {
         var indent = advanceWhitespace();
         if (indent.isEmpty())
-            throw Exceptions.expectingSourceLineIndent(source.currentSpan());
-        int columnNumber = source.lexeme().length() - 1;
+            throw Report.expectingSourceLineIndent();
+        int columnNumber = source.lexeme().length();
         source.tokenStart();
         return columnNumber;
     }
@@ -202,7 +208,7 @@ public class TestCaseDiagnosticParser {
         skipWhitespace();
 
         if (isAtEndOfLine())
-            throw Exceptions.expectingDiagnosticMessage(source.currentSpan());
+            throw Report.expectingDiagnosticMessage();
 
         while (!isAtEndOfLine()) source.advance();
         var message = source.lexeme();
@@ -212,7 +218,7 @@ public class TestCaseDiagnosticParser {
         return message;
     }
 
-    private Diagnostic.Code consumeCode() {
+    private Code consumeCode() {
         requireCharacter('[', () -> "Expecting '['");
         while (!source.isAtEnd() && Character.isLetterOrDigit(source.peek())) source.advance();
         var code = parseCode(source.lexeme());
@@ -220,26 +226,26 @@ public class TestCaseDiagnosticParser {
         return code;
     }
 
-    private Diagnostic.Code parseCode(String value) {
+    private Code parseCode(String value) {
         try {
-            Diagnostic.Code code = Diagnostic.Code.fromCode(value);
+            Code code = Diagnostic.Code.fromCode(value);
             source.tokenStart();
             return code;
         } catch (IllegalArgumentException e) {
-            throw Exceptions.expectingDiagnosticCode(source.currentSpan());
+            throw Report.expectingDiagnosticCode();
         }
     }
 
     private void requireCharacter(char c, Supplier<String> message) {
         if (!source.match(c)) {
-            throw Exceptions.expectingCharacter(source.currentSpan(), message.get());
+            throw Report.expectingCharacter(message.get());
         }
         source.tokenStart();
     }
 
     private void requireNewline() {
         if (!source.isAtEnd() && !source.match('\n')) {
-            throw Exceptions.expectingCharacter(source.currentSpan(), "Expecting newline");
+            throw Report.expectingCharacter("Expecting newline");
         }
         source.tokenStart();
     }
@@ -253,7 +259,7 @@ public class TestCaseDiagnosticParser {
             }
         }
 
-        throw Exceptions.severityExpected(source.currentSpan());
+        throw Report.severityExpected();
     }
 
     private void skipWhitespace() {
@@ -304,48 +310,100 @@ public class TestCaseDiagnosticParser {
         return source.isAtEnd() || source.peek('\n');
     }
 
-    static class Exceptions {
 
-        public static TestCaseParserException severityExpected(SourceSpan sourceSpan) {
-            return new TestCaseParserException(Diagnostic.Code.ScannerTestCaseParserError,
-                    sourceSpan, "Expected message severity (%s)".formatted(String.join("|", Severity.names())));
+    @SuppressWarnings("SameParameterValue")
+    class DiagnosticReportWrapper {
+
+        private @NonNull TestInstantiationException exception(Diagnostic diagnostic, Label label) {
+            return exception(diagnostic, label, null);
         }
 
-        public static TestCaseParserException expectingCharacter(SourceSpan sourceSpan, String message) {
-            return new TestCaseParserException(Diagnostic.Code.ScannerTestCaseParserError, sourceSpan, message);
+        private @NonNull TestInstantiationException exception(Diagnostic diagnostic, Label label, @Nullable String suggestion) {
+            String message = "%s: %s on line %d, column %d".formatted(
+                    diagnostic.message(), label.message(), label.span().line(), label.span().column());
+            if (suggestion != null)
+                message += "\nSuggestion: " + suggestion;
+
+            var exception = new TestInstantiationException(message);
+
+            var stackTrace = exception.getStackTrace();
+            int i = 0;
+            while (i < stackTrace.length) {
+                var element = stackTrace[i];
+                if (!element.getClassName().equals(DiagnosticReportWrapper.class.getName())) {
+                    break;
+                }
+                i++;
+            }
+            exception.setStackTrace(Arrays.copyOf(stackTrace, i));
+            return exception;
         }
 
-        public static TestCaseParserException expectingDiagnosticCode(SourceSpan sourceSpan) {
-            return new TestCaseParserException(Diagnostic.Code.ScannerTestCaseParserError,
-                    sourceSpan, "Expected message diagnostic code!");
-            // Suggestion: "Did you mean".
+        TestInstantiationException error(String message, Label label) {
+            var error = DiagnosticReporter.error(Code.ScannerTestCaseParserError, message, List.of(label));
+            return exception(error, label);
         }
 
-        public static TestCaseParserException expectingDiagnosticMessage(SourceSpan sourceSpan) {
-            return new TestCaseParserException(Diagnostic.Code.ScannerTestCaseParserError,
-                    sourceSpan, "Expected diagnostic message!");
-            // Suggestion: "Did you mean".
+        TestInstantiationException error(String message, Label label, String suggestion) {
+            var error = DiagnosticReporter.error(Code.ScannerTestCaseParserError, message, List.of(label), List.of(suggestion));
+            return exception(error, label, suggestion);
         }
 
-        public static TestCaseParserException expectLabels(SourceSpan sourceSpan) {
-            return new TestCaseParserException(Diagnostic.Code.ScannerTestCaseParserError, sourceSpan, "Expected one or more diagnostic labels!");
+        Diagnostic warning(String message, Label label) {
+            return DiagnosticReporter.warning(Code.ScannerTestCaseParserError, message, List.of(label));
         }
 
-        public static TestCaseParserException expectSourceFileName(SourceSpan sourceSpan) {
-            return new TestCaseParserException(Diagnostic.Code.ScannerTestCaseParserError, sourceSpan, "Expected source file name!");
+        TestInstantiationException expectingCharacter(String message) {
+            return error("Failed to parse diagnostic message!", Label.primaryOf(source.currentSpan(), message));
         }
 
-        public static TestCaseParserException expectInteger(SourceSpan sourceSpan) {
-            return new TestCaseParserException(Diagnostic.Code.ScannerTestCaseParserError, sourceSpan, "Expected an integer!");
+        TestInstantiationException severityExpected() {
+            var severityNames = Arrays.stream(Severity.values())
+                    .map(Severity::name)
+                    .map(String::toLowerCase)
+                    .collect(joining("|"));
+
+            return error("Failed to parse diagnostic message header!",
+                    Label.primaryOf(source.currentSpan(), "Expected diagnostic message severity"),
+                    "Must be one of " + severityNames);
         }
 
-        public static TestCaseParserException expectingSourceLineIndent(SourceSpan sourceSpan) {
-            return new TestCaseParserException(Diagnostic.Code.ScannerTestCaseParserError, sourceSpan, "Expected at least one character source line indent!");
+        TestInstantiationException expectingDiagnosticCode() {
+            return error("Failed to parse diagnostic message header!",
+                    Label.primaryOf(source.currentSpan(), "Expected diagnostic message code"),
+                    "Must be a valid diagnostic code! See org.bourbon.compiler.Diagnostic.Code for valid values!");
         }
 
-        public static TestCaseParserException notImplementedYet(SourceSpan sourceSpan, String message) {
-            return new TestCaseParserException(Diagnostic.Code.NotImplemented, sourceSpan, message);
+        TestInstantiationException expectingDiagnosticMessage() {
+            return error("Failed to parse diagnostic message header!",
+                    Label.primaryOf(source.currentSpan(), "Expected diagnostic message"));
         }
-        // TODO: exception thrown
+
+        TestInstantiationException expectLabels() {
+            return error("Failed to parse diagnostic message!",
+                    Label.primaryOf(source.currentSpan(), "Expected one or more diagnostic labels"));
+        }
+
+        TestInstantiationException expectSourceFileName() {
+            return error("Failed to parse diagnostic message!",
+                    Label.primaryOf(source.currentSpan(), "Expected source file name"));
+        }
+
+        TestInstantiationException expecInteger() {
+            return error("Failed to parse diagnostic message!",
+                    Label.primaryOf(source.currentSpan(), "Expected an integer"));
+        }
+
+        void primaryLineNumberMismatch(int primaryLine, int lineNumber) {
+            warning("Primary line number mismatch! Expected %d but found %d".formatted(primaryLine, lineNumber),
+                    Label.primaryOf(source.currentSpan(), "Expected primary line number"));
+        }
+
+        TestInstantiationException expectingSourceLineIndent() {
+            return error("Failed to parse diagnostic message!",
+                    Label.primaryOf(source.currentSpan(), "Expected at least one character source line indent"));
+        }
+
     }
+
 }

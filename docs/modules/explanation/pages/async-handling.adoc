@@ -14,7 +14,7 @@ It demonstrates how asynchronous execution can be modeled purely via algebraic e
 == 1. Domain & Core Paradigm
 
 * *Language Context:* Bourbon utilizes a set-theoretic type system ($A \mid B$, $A \ \& \ B$) with first-class, row-polymorphic algebraic effect handlers.
-* *Core Philosophy:* Asynchrony is *not* a language keyword (`async`/`await`), nor does it alter function return types (`T` remains `T`, not `Promise<T>`).
+* *Core Philosophy:* Asynchrony is *not* a language keyword (`async`/`await`), nor does it alter function return types (`E` remains `E`, not `Promise<T>`).
 Instead, asynchrony is modeled strictly as an *ambient capability interface* (`Async`) managed via delimited continuations and fiber dispatch.
 * *Elimination of "Function Coloring":* There is no distinction between synchronous and asynchronous functions in their signatures.
 A function requiring non-blocking execution simply includes `Async` in its effect row (e.g. `performs Async | Network`).
@@ -58,7 +58,7 @@ Returns `Fiber<T>`.
 
 | `fiber.await()`
 | `Async.await(fiber)`
-| Yields continuation until the fiber completes and returns `T`.
+| Yields continuation until the fiber completes and returns `E`.
 
 | `value (a, b) = await (fork A(), fork B())`
 | Combined fiber wait
@@ -144,7 +144,7 @@ shared void streamPrices(String symbol) performs Async | Network | UI {
 
 | *Type Overhead*
 | `Promise<T>` / `Task<T>` / `Future<T>` wrappers
-| Plain return type `T` (Capability declared in row)
+| Plain return type `E` (Capability declared in row)
 
 | *Function Compatibility*
 | Colored functions (`async` cannot be called from sync without blocking)

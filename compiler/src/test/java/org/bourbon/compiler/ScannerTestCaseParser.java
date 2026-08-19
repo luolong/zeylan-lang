@@ -37,7 +37,8 @@ class ScannerTestCaseParser {
 
         consumeExpectations(lineOffsets);
 
-        return new ScannerTestCase(testCaseInput, expectedTokens, expectedDiagnostics);
+        var namedSource = Source.named(this.source.name()).of(testCaseInput);
+        return new ScannerTestCase(namedSource, expectedTokens, expectedDiagnostics);
     }
 
     private void consumeExpectations(List<Integer> lineOffsets) {

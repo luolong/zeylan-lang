@@ -117,7 +117,7 @@ public class ScannerTestCaseParserTest {
         @Test
         void getInput() {
             var expectedTestCaseInput = VALID_TEST_CASE.substring(SOURCE_BLOCK_START, SOURCE_BLOCK_END);
-            assertEquals(expectedTestCaseInput, testCase.input(), "Input");
+            assertEquals(expectedTestCaseInput, testCase.input().content(), "Input");
         }
 
         @Test
