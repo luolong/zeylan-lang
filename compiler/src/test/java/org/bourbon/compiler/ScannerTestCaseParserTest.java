@@ -11,8 +11,6 @@ import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import java.util.List;
-
 import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeEach;
@@ -38,7 +36,7 @@ public class ScannerTestCaseParserTest {
             SEMICOLON ; @ 3 [34..35]
             STRING '"Hello"' "Hello" @ 5 [36..43]
             ---
-            NUMBER 42 42.0 @ 13 [44..46]
+            NUMBER 42 42.0 @ 1 [44..46]
             ✗ error[BCE000100]: Unexpected character
               --> <VALID_TEST_CASE>:3:4
                 |
@@ -65,8 +63,8 @@ public class ScannerTestCaseParserTest {
                 "9, LEFT_BRACE, '{', null, 2, 1, 32, 1",
                 "10, RIGHT_BRACE, '}', null, 2, 2, 33, 1",
                 "11, SEMICOLON, ';', null, 2, 3, 34, 1",
-                //"12, STRING, '\"Hello\"', 'Hello', 2, 3, 36, 7",
-                //"14, NUMBER, '42', 42.0, 3, 1, 42, 2",
+                "12, STRING, '\"Hello\"', 'Hello', 2, 5, 36, 7",
+                "14, NUMBER, '42', 42.0, 3, 1, 44, 2",
         })
         void parseSimpleToken(int testCaseLine, String expectedTypeName, String expectedLexeme, String expectedLiteralString, int expectedLine, int expectedColumn, int expectedStartOffset, int expectedLength) {
             var source = Source.of(VALID_TEST_CASE).resetToLine(testCaseLine);
@@ -80,14 +78,14 @@ public class ScannerTestCaseParserTest {
                 default -> null;
             };
 
-            assertAll("Token on line " + testCaseLine,
-                    () -> assertEquals(expectedType, token.type()),
-                    () -> assertEquals(expectedLexeme, token.lexeme()),
-                    () -> assertEquals(expectedLiteral, token.literal()),
-                    () -> assertEquals(expectedLine, token.line()),
-                    () -> assertEquals(expectedColumn, token.column()),
-                    () -> assertEquals(expectedStartOffset, token.startOffset()),
-                    () -> assertEquals(expectedLength, token.length()));
+            assertAll("Token " + token.type() + " on line " + testCaseLine,
+                    () -> assertEquals(expectedType, token.type(), "type"),
+                    () -> assertEquals(expectedLexeme, token.lexeme(), "lexeme"),
+                    () -> assertEquals(expectedLiteral, token.literal(), "literal"),
+                    () -> assertEquals(expectedLine, token.line(), "line"),
+                    () -> assertEquals(expectedColumn, token.column(), "column"),
+                    () -> assertEquals(expectedStartOffset, token.startOffset(), "startOffset"),
+                    () -> assertEquals(expectedLength, token.length(), "length"));
         }
     }
 
@@ -135,7 +133,7 @@ public class ScannerTestCaseParserTest {
             assertEquals(1, parserDiagnostics.size(), "Diagnostic count");
 
             var diagnostic = parserDiagnostics.getFirst();
-            assertAll("Parsed diagnbostic",
+            assertAll("Parsed diagnostic",
                     () -> assertEquals(Diagnostic.Severity.ERROR, diagnostic.severity(), "severity"),
                     () -> assertEquals(Diagnostic.Code.ScannerUnexpectedCharacter, diagnostic.code(), "code"),
                     () -> assertEquals("Unexpected character", diagnostic.message(), "message"),
@@ -146,7 +144,7 @@ public class ScannerTestCaseParserTest {
                                 () -> assertEquals(1, labels.size(), "count"),
                                 () -> assertEquals("<VALID_TEST_CASE>", label.span().name().name(), "label source"),
                                 () -> assertEquals(3, label.span().line(), "label line"),
-                                () -> assertEquals(3, label.span().column(), "label column"),
+                                () -> assertEquals(4, label.span().column(), "label column"),
                                 () -> assertEquals(1, label.span().length(), "label length"),
                                 () -> assertEquals("Unexpected symbol", label.message(), "label message")
                         );

@@ -7,6 +7,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.jspecify.annotations.NullMarked;
@@ -46,8 +47,15 @@ public class Source implements CharSequence {
     //<editor-fold desc="Current source positions">
 
     int column() {
-        int lineOffset = lineOffset(startLine);
-        return start - lineOffset + 1;
+        return column(start);
+    }
+
+    int column(int offset) {
+        if (offset == start) return start - lineOffset(startLine) + 1;
+        if (offset == current) return current - lineOffset(currentLine) + 1;
+
+        int lineOffset = lineOffsetAt(offset);
+        return offset - lineOffset + 1;
     }
 
     int start() {
@@ -60,6 +68,18 @@ public class Source implements CharSequence {
 
     private int lineOffset(int line) {
         return lineOffsets.get(line - 1);
+    }
+
+    private int lineOffsetAt(int offset) {
+        return lineOffset(lineNumberAt(offset));
+    }
+
+    private int lineNumberAt(int offset) {
+        if (offset == start) return startLine;
+        if (offset == current) return currentLine;
+
+        int index = Collections.binarySearch(lineOffsets, offset);
+        return index >= 0 ? index : -index - 1;
     }
 
     //</editor-fold>
@@ -168,7 +188,12 @@ public class Source implements CharSequence {
     }
 
     public final SourceSpan spanAt(int startOffset, int length) {
-        return sourceSpan().at(startLine, column(), startOffset, length);
+        assert current <= startOffset : "Cannot create spans past current cursor position!";
+
+        if (startOffset == start) return sourceSpan().at(startLine, column(), start, length);
+        if (startOffset == current) return sourceSpan().at(currentLine, column(current), current, length);
+
+        return sourceSpan().at(lineNumberAt(startOffset), column(startOffset), startOffset, length);
     }
 
     public final SourceSpan currentSpan() {

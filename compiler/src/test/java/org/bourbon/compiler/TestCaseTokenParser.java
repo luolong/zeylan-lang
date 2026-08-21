@@ -316,17 +316,15 @@ public class TestCaseTokenParser {
         int start = source.start();
         StringBuilder s = new StringBuilder();
         while (!source.isAtEnd()) {
-            char c = source.peek();
+            char c = source.advance();
             if (c == quote) {
                 s.append(source.subSequence(start, source.current()));
-                source.advance();
                 source.tokenStart();
-                return s.toString();
+                return stripQuotes(s.toString());
             }
 
             if (c == '\\') {
                 s.append(source.subSequence(start, source.current()));
-                source.advance();
                 s.append(readEscapeChar());
                 start = source.current();
             }
@@ -334,10 +332,16 @@ public class TestCaseTokenParser {
             if (c == '\n') {
                 throw TestCaseTokenParserException.unexpectedEndOfLine(source.currentSpan());
             }
-            source.advance();
         }
 
         throw TestCaseTokenParserException.unexpectedEndOfInput(source.currentSpan());
+    }
+
+    private String stripQuotes(String string) {
+        if (string.startsWith("'") && string.endsWith("'") || string.startsWith("\"") && string.endsWith("\"")) {
+            return string.substring(1, string.length() - 1);
+        }
+        return string;
     }
 
     private String consumeEscapeChar() {

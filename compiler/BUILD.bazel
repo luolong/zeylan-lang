@@ -79,9 +79,13 @@ java_test_suite(
     ],
     deps = [
         ":compiler_lib",
+        "@maven//:org_jline_jansi",
+        "@maven//:org_jline_jline_reader",
+        "@maven//:org_jline_jline_terminal",
         "@maven//:org_jspecify_jspecify",
         "@maven//:org_junit_jupiter_junit_jupiter_api",
         "@maven//:org_junit_jupiter_junit_jupiter_params",
         "@maven//:org_junit_platform_junit_platform_commons",
+        "@maven//:org_opentest4j_opentest4j",
     ],
 )

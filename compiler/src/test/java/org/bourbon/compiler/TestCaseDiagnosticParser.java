@@ -12,6 +12,7 @@ import org.bourbon.compiler.Diagnostic.Code;
 import org.bourbon.compiler.Diagnostic.Severity;
 import org.bourbon.compiler.DiagnosticFormatter.Symbol.NerdFont;
 import org.bourbon.compiler.DiagnosticFormatter.Symbol.Unicode;
+import org.bourbon.compiler.ScannerTestCaseParser.LineOffsets;
 import org.bourbon.compiler.SourceSpan.SourceName;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -21,18 +22,18 @@ public class TestCaseDiagnosticParser {
 
     private final Source source;
     private final int lineNumber;
-    private final int lineOffset;
+    private final LineOffsets lineOffsets;
 
     private final DiagnosticReportWrapper Report = new DiagnosticReportWrapper();
 
-    public TestCaseDiagnosticParser(Source source, int lineNumber, int lineOffset) {
+    public TestCaseDiagnosticParser(Source source, int lineNumber, LineOffsets lineOffsets) {
         this.source = source;
         this.lineNumber = lineNumber;
-        this.lineOffset = lineOffset;
+        this.lineOffsets = lineOffsets;
     }
 
-    public static Diagnostic parse(Source source, int lineNumber, int lineOffset) {
-        return new TestCaseDiagnosticParser(source, lineNumber, lineOffset).parseDiagnostic();
+    public static Diagnostic parse(Source source, int lineNumber, LineOffsets lineOffsets) {
+        return new TestCaseDiagnosticParser(source, lineNumber, lineOffsets).parseDiagnostic();
     }
 
     public static boolean isDiagnosticStart(Source source) {
@@ -65,8 +66,8 @@ public class TestCaseDiagnosticParser {
             if (!consumeArrow()) break;
             sourceFileName = consumeSourceFileName();
             requireCharacter(':', () -> "Expecting ':' after source file name");
-            primaryLine = consumeLineNumber(primaryLine);
-            requireCharacter(':', () -> "Expecting ':' after line number");
+            primaryLine = consumePrimaryLineNumber(primaryLine);
+            requireCharacter(':', () -> "Expecting ':' after primary line number");
             primaryColumn = consumeInteger();
             skipWhitespace();
             requireNewline();
@@ -75,7 +76,7 @@ public class TestCaseDiagnosticParser {
             while (!source.isAtEnd()) {
                 switch (consumeSourceLabel()) {
                     case LabelResult.Some(int labelLine, int labelColumn, int spanLength, String labelMessage) -> {
-                        var startOffset = lineOffset + labelColumn - 1;
+                        var startOffset = lineOffsets.get(sourceFileName, labelLine) + labelColumn - 1;
                         var sourceSpan = new SourceSpan(SourceName.of(sourceFileName), labelLine, labelColumn, startOffset, spanLength);
                         var isPrimary = labelLine == primaryLine && labelColumn == primaryColumn;
                         labels.add(new Label(sourceSpan, labelMessage, isPrimary));
@@ -99,7 +100,7 @@ public class TestCaseDiagnosticParser {
         return new Diagnostic(code, severity, message, labels);
     }
 
-    private int consumeLineNumber(int primaryLine) {
+    private int consumePrimaryLineNumber(int primaryLine) {
         int lineNumber = consumeInteger();
         if (primaryLine != lineNumber) {
             Report.primaryLineNumberMismatch(primaryLine, lineNumber);
@@ -299,6 +300,7 @@ public class TestCaseDiagnosticParser {
         }
     }
 
+    @SuppressWarnings("SameParameterValue")
     private void advanceUntilMatch(char end) {
         while (!isAtEndOfLine() && source.peek() != end) {
             source.advance();
@@ -349,6 +351,7 @@ public class TestCaseDiagnosticParser {
             return exception(error, label, suggestion);
         }
 
+        @SuppressWarnings("UnusedReturnValue")
         Diagnostic warning(String message, Label label) {
             return DiagnosticReporter.warning(Code.ScannerTestCaseParserError, message, List.of(label));
         }

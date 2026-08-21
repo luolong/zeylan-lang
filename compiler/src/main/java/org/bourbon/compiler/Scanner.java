@@ -317,6 +317,7 @@ public class Scanner {
         addToken(match(secondChar) ? doubleToken : singleToken);
     }
 
+    @SuppressWarnings("BooleanMethodIsAlwaysInverted")
     private boolean isAtEnd() {
         return source.isAtEnd();
     }

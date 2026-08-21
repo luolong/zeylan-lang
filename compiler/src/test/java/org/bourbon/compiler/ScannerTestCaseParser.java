@@ -28,6 +28,11 @@ class ScannerTestCaseParser {
         return displayName != null && !displayName.isBlank() ? displayName : source.name();
     }
 
+    @FunctionalInterface
+    public interface LineOffsets {
+        int get(String sourceName, int lineNumber);
+    }
+
     public ScannerTestCase parseTestCase() {
         displayName = consumeHeader();
 
@@ -64,7 +69,7 @@ class ScannerTestCaseParser {
             // Reset scanner position to start of the line
             source.tokenReset();
             if (TestCaseDiagnosticParser.isDiagnosticStart(source)) {
-                expectedDiagnostics.add(consumeDiagnostic(lineNumber, lineOffset));
+                expectedDiagnostics.add(consumeDiagnostic(lineNumber, (_, number) -> lineOffsets.get(number - 1)));
             } else {
                 expectedTokens.add(consumeToken(lineNumber, lineOffset));
             }
@@ -81,9 +86,9 @@ class ScannerTestCaseParser {
         }
     }
 
-    private Diagnostic consumeDiagnostic(int lineNumber, int lineOffset) {
+    private Diagnostic consumeDiagnostic(int lineNumber, LineOffsets lineOffsets) {
         try {
-            return TestCaseDiagnosticParser.parse(source, lineNumber, lineOffset);
+            return TestCaseDiagnosticParser.parse(source, lineNumber, lineOffsets);
         } catch (TestCaseParserException e) {
             TestCaseParserException.printStackTrace(e, source);
             throw new TestInstantiationException("Failed to parse diagnostic for " + source.name(), e);
