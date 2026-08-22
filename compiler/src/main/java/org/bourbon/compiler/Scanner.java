@@ -7,6 +7,7 @@ import static org.bourbon.compiler.TokenType.AMPERSAND_EQUAL;
 import static org.bourbon.compiler.TokenType.BACKTICK;
 import static org.bourbon.compiler.TokenType.BANG;
 import static org.bourbon.compiler.TokenType.BANG_EQUAL;
+import static org.bourbon.compiler.TokenType.BANG_EQUAL_EQUAL;
 import static org.bourbon.compiler.TokenType.CARET;
 import static org.bourbon.compiler.TokenType.COLON;
 import static org.bourbon.compiler.TokenType.COMMA;
@@ -16,6 +17,8 @@ import static org.bourbon.compiler.TokenType.EOF;
 import static org.bourbon.compiler.TokenType.EQUAL;
 import static org.bourbon.compiler.TokenType.EQUAL_EQUAL;
 import static org.bourbon.compiler.TokenType.FAT_ARROW;
+import static org.bourbon.compiler.TokenType.GREATER;
+import static org.bourbon.compiler.TokenType.GREATER_EQUAL;
 import static org.bourbon.compiler.TokenType.LEFT_BRACE;
 import static org.bourbon.compiler.TokenType.LEFT_BRACKET;
 import static org.bourbon.compiler.TokenType.LEFT_PAREN;
@@ -23,6 +26,7 @@ import static org.bourbon.compiler.TokenType.LESS;
 import static org.bourbon.compiler.TokenType.LESS_EQUAL;
 import static org.bourbon.compiler.TokenType.LESS_EQUAL_GREATER;
 import static org.bourbon.compiler.TokenType.MINUS;
+import static org.bourbon.compiler.TokenType.MINUS_EQUAL;
 import static org.bourbon.compiler.TokenType.MINUS_MINUS;
 import static org.bourbon.compiler.TokenType.PERCENT;
 import static org.bourbon.compiler.TokenType.PERCENT_EQUAL;
@@ -42,6 +46,7 @@ import static org.bourbon.compiler.TokenType.STAR;
 import static org.bourbon.compiler.TokenType.STAR_DOT;
 import static org.bourbon.compiler.TokenType.STAR_EQUAL;
 import static org.bourbon.compiler.TokenType.STAR_STAR;
+import static org.bourbon.compiler.TokenType.THIN_ARROW;
 import static org.bourbon.compiler.TokenType.TRIPLE_EQUAL;
 import static org.bourbon.compiler.TokenType.SEMICOLON;
 import static org.bourbon.compiler.TokenType.SLASH;
@@ -144,21 +149,17 @@ public class Scanner {
 
             // <editor-fold desc="Multi-char tokens">
 
-            // <editor-fold desc="Operators: ? ?. % %= ! != ~ ~= ">
+            // <editor-fold desc="Operators: ? ?. % %= ~ ~= ">
             case '?' -> addDoubleToken(QUESTION, '.', QUESTION_DOT);
             case '%' -> addDoubleToken(PERCENT, '=', PERCENT_EQUAL);
-            case '!' -> addDoubleToken(BANG, '=', BANG_EQUAL);
             case '~' -> addDoubleToken(TILDE, '=', TILDE_EQUAL);
             // </editor-fold>
 
-            // <editor-fold desc="Operators: > < <= <=> ">
+            // <editor-fold desc="Operators: < > <= >= <=>">
+            case '>' -> addDoubleToken(GREATER, '=', GREATER_EQUAL);
             case '<' -> {
                 if (match('=')) {
-                    if (match('>')) {
-                        addToken(LESS_EQUAL_GREATER);
-                    } else {
-                        addToken(LESS_EQUAL);
-                    }
+                    addToken(match('>') ? LESS_EQUAL_GREATER : LESS_EQUAL);
                 } else {
                     addToken(LESS);
                 }
@@ -196,7 +197,9 @@ public class Scanner {
                 if (match('-')) {
                     addToken(MINUS_MINUS);
                 } else if (match('=')) {
-                    addToken(PLUS_EQUAL);
+                    addToken(MINUS_EQUAL);
+                } else if (match('>')) {
+                    addToken(THIN_ARROW);
                 } else {
                     addToken(MINUS);
                 }
@@ -253,20 +256,24 @@ public class Scanner {
 
             // <editor-fold desc="Operators: * ** *. *= ">
             case '*' -> {
-                switch (peek()) {
-                    case '*' -> {
-                        addToken(STAR_STAR);
-                        advance();
-                    }
-                    case '.' -> {
-                        addToken(STAR_DOT);
-                        advance();
-                    }
-                    case '=' -> {
-                        addToken(STAR_EQUAL);
-                        advance();
-                    }
-                    default -> addToken(STAR);
+                if (match('*')) {
+                    addToken(STAR_STAR);
+                } else if (match('.')) {
+                    addToken(STAR_DOT);
+                } else if (match('=')) {
+                    addToken(STAR_EQUAL);
+                } else {
+                    addToken(STAR);
+                }
+            }
+            // </editor-fold>
+
+            // <editor-fold desc="Operators: ! != !== ">
+            case '!' -> {
+                if (match('=')) {
+                    addToken(match('=') ? BANG_EQUAL_EQUAL : BANG_EQUAL);
+                } else {
+                    addToken(BANG);
                 }
             }
             // </editor-fold>

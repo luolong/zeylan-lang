@@ -40,31 +40,45 @@ class ScannerTestCaseParser {
         var testCaseInput = source.source();
         var lineOffsets = source.lineOffsets();
 
-        consumeExpectations(lineOffsets);
+        if (!isAtEnd()) {
+            consumeExpectations(lineOffsets);
+        }
 
         var namedSource = Source.named(this.source.name()).of(testCaseInput);
-        return new ScannerTestCase(namedSource, expectedTokens, expectedDiagnostics);
+        return new ScannerTestCase(namedSource, expectedTokens(source), expectedDiagnostics);
+    }
+
+    private List<Token> expectedTokens(TestCaseSource source) {
+        var lineOffsets = source.lineOffsets();
+        if (expectedTokens.isEmpty() || expectedTokens.getLast().type() != TokenType.EOF) {
+            var lastLineOffset = lineOffsets.isEmpty() ? 0 : lineOffsets.getLast();
+            int lineNumber = lineOffsets.isEmpty() ? 1 : lineOffsets.size();
+            expectedTokens.add(new Token(TokenType.EOF, "", null,
+                    lineNumber, 1, lastLineOffset, 0));
+        }
+
+        return expectedTokens;
     }
 
     private void consumeExpectations(List<Integer> lineOffsets) {
         int lineNumber = 0;
         int lineOffset = 0;
-        while (!source.isAtEnd()) {
+        while (!isAtEnd()) {
             var line = skipEmptyLines();
-            if (line.equals("---")) {
+            if (line.matches(TEST_CASE_SEPARATOR_REGEX)) {
                 lineOffset = lineOffsets.get(lineNumber++);
                 source.tokenStart();
                 continue;
             }
-
-            if (lineNumber == 0)
-                throw Exceptions.expectLineSeparator(source.currentSpan());
 
             if (line.stripLeading().startsWith("#")) {
                 // This is a line comment. Skip it.
                 source.tokenStart();
                 continue;
             }
+
+            if (lineNumber == 0)
+                throw Exceptions.expectLineSeparator(source.currentSpan());
 
             // Reset scanner position to start of the line
             source.tokenReset();
@@ -78,8 +92,7 @@ class ScannerTestCaseParser {
 
     private Token consumeToken(int lineNumber, int lineOffset) {
         try {
-            Token token = TestCaseTokenParser.parse(source, lineNumber, lineOffset);
-            return token;
+            return TestCaseTokenParser.parse(source, lineNumber, lineOffset);
         } catch (TestCaseParserException e) {
             TestCaseParserException.printStackTrace(e, source);
             throw new TestInstantiationException("Failed to parse token for " + source.name(), e);
@@ -94,7 +107,6 @@ class ScannerTestCaseParser {
             throw new TestInstantiationException("Failed to parse diagnostic for " + source.name(), e);
         }
     }
-
 
     private String consumeHeader() {
         requireHeaderSeparator();
@@ -125,28 +137,30 @@ class ScannerTestCaseParser {
     private TestCaseSource consumeSource() {
         source.tokenStart();
 
-        var sourceLength = 0;
-        var lineOffsets = new ArrayList<Integer>();
+        var startSpan = source.currentSpan();
+        var startLine = startSpan.line();
+        var startOffset = startSpan.startOffset();
 
-        var lines = stringJoiner();
-        while (!source.isAtEnd()) {
-            sourceLength += source.currentSpan().length();
-            lineOffsets.add(sourceLength);
-
+        while (!isAtEnd()) {
             var line = nextLine();
             if (line.matches(TEST_CASE_SEPARATOR_REGEX)) {
+                source.tokenReset();
                 break;
             }
-            lines.add(line);
         }
 
-        source.tokenReset();
-        return new TestCaseSource(lines.toString(), List.copyOf(lineOffsets));
+        var sourceText = source.subSequence(startOffset, source.current());
+        var lineOffsets = source.lineOffsets()
+                .subList(startLine - 1, source.currentLine()-1).stream()
+                .map(offset -> offset - startOffset)
+                .toList();
+
+        return new TestCaseSource(sourceText.toString(), List.copyOf(lineOffsets));
     }
 
     private String skipEmptyLines() {
         var line = nextLine();
-        while (!source.isAtEnd() && line.isBlank()) {
+        while (!isAtEnd() && line.isBlank()) {
             line = nextLine();
         }
         return line;
@@ -158,15 +172,18 @@ class ScannerTestCaseParser {
     }
 
     private String advanceLine() {
-        while (!source.isAtEnd() && !source.peek('\n'))
+        while (!isAtEnd() && !source.peek('\n'))
             source.advance();
         // Return the line without trailing newline
         var line = source.lexeme();
-        if (!source.isAtEnd())
+        if (!isAtEnd())
             source.advance();
         return line;
     }
 
+    private boolean isAtEnd() {
+        return source.isAtEnd();
+    }
 
     private static StringJoiner stringJoiner() {
         return new StringJoiner("\n", "", "\n");

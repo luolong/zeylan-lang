@@ -42,9 +42,7 @@ public final class CompilerAssertions {
     // Direct Assertion Methods (Hierarchical MultipleFailuresError)
     // =========================================================================
 
-    public static void assertDiagnosticsMatch(
-            List<Diagnostic> expectedDiagnostics,
-            List<Diagnostic> actualDiagnostics) {
+    public static void assertDiagnosticsMatch(List<Diagnostic> expectedDiagnostics, List<Diagnostic> actualDiagnostics) {
 
         var diffEntries = DiagnosticDiffEngine.compare(expectedDiagnostics, actualDiagnostics);
         var itemFailures = new ArrayList<Throwable>();
@@ -108,9 +106,7 @@ public final class CompilerAssertions {
         }
     }
 
-    public static void assertTokensMatch(
-            List<Token> expectedTokens,
-            List<Token> actualTokens) {
+    public static void assertTokensMatch(List<Token> expectedTokens, List<Token> actualTokens) {
 
         var diffEntries = TokenDiffEngine.compare(expectedTokens, actualTokens);
         var itemFailures = new ArrayList<Throwable>();
@@ -119,64 +115,48 @@ public final class CompilerAssertions {
             switch (diffEntry) {
                 case DiffEntry.Unchanged<Token> _ -> {}
 
-                case DiffEntry.Added<Token> added ->
-                    itemFailures.add(new AssertionError(String.format(
-                            "Unexpected actual token at index %d: %s",
-                            added.actualIndex(),
-                            added.item())));
+                case DiffEntry.Added<Token>(int actualIndex, Token item) -> itemFailures.add(assertionFailure()
+                        .message(String.format("Unexpected actual token at index %d", actualIndex))
+                        .actual(item)
+                        .build());
 
-                case DiffEntry.Deleted<Token> deleted ->
-                    itemFailures.add(new AssertionError(String.format(
-                            "Missing expected token at index %d: %s",
-                            deleted.expectedIndex(),
-                            deleted.item())));
+                case DiffEntry.Deleted<Token>(int expectedIndex, Token item) -> itemFailures.add(assertionFailure()
+                        .message(String.format("Missing expected token at index %d", expectedIndex))
+                        .expected(item)
+                        .build());
 
-                case DiffEntry.Modified<Token> modified -> {
+                case DiffEntry.Modified<Token>(int expectedIndex, int actualIndex, Token expected, Token actual, double similarity, List<FieldChange> fieldChanges) -> {
                     var fieldFailures = new ArrayList<Throwable>();
 
-                    for (var fieldChange : modified.fieldChanges()) {
+                    for (var fieldChange : fieldChanges) {
                         switch (fieldChange) {
-                            case FieldChange.ModifiedField(var fieldName, var expectedValue, var actualValue) -> {
-                                if (expectedValue instanceof String expectedString
-                                        && actualValue instanceof String actualString
-                                        && !expectedString.contains("\n")
-                                        && !actualString.contains("\n")) {
-                                    var inlineDiff = InlineTextDiff.formatInlineDiff(
-                                            expectedString,
-                                            actualString,
-                                            InlineTextDiff.OutputMode.PLAIN_TEXT);
-                                    fieldFailures.add(new AssertionError(String.format(
-                                            "field '%s': %s",
-                                            fieldName,
-                                            inlineDiff)));
-                                } else {
-                                    fieldFailures.add(new AssertionError(String.format(
-                                            "field '%s': expected '%s', got '%s'",
-                                            fieldName,
-                                            expectedValue,
-                                            actualValue)));
-                                }
-                            }
-                            case FieldChange.AddedField(var fieldName, var actualValue) ->
-                                fieldFailures.add(new AssertionError(String.format(
-                                        "field '%s': unexpected value '%s'",
-                                        fieldName,
-                                        actualValue)));
+                            case FieldChange.ModifiedField(var fieldName, var expectedValue, var actualValue) -> fieldFailures.add(assertionFailure()
+                                    .message(String.format("field '%s'", fieldName))
+                                    .expected(expectedValue)
+                                    .actual(actualValue)
+                                    .build());
+
+                            case FieldChange.AddedField(var fieldName, var actualValue) -> fieldFailures.add(assertionFailure()
+                                    .message(String.format("field '%s'", fieldName))
+                                    .actual(actualValue)
+                                    .build());
 
                             case FieldChange.RemovedField(var fieldName, var expectedValue) ->
-                                fieldFailures.add(new AssertionError(String.format(
-                                        "field '%s': missing expected value '%s'",
-                                        fieldName,
-                                        expectedValue)));
+                                fieldFailures.add(assertionFailure()
+                                        .message(String.format("field '%s'", fieldName))
+                                        .expected(expectedValue)
+                                        .build());
+
                             case null -> {}
                         }
                     }
 
                     if (!fieldFailures.isEmpty()) {
-                        var heading = (modified.expectedIndex() == modified.actualIndex())
-                                ? String.format("Token mismatch at index %d", modified.expectedIndex())
-                                : String.format("Token mismatch at expected index %d, actual index %d",
-                                        modified.expectedIndex(), modified.actualIndex());
+                        var heading = String.format("Token <%s @ %d:%d [%d..%d]>",
+                                expected.type(), expected.line(), expected.column(), expected.startOffset(), expected.end()) +
+                                ((expectedIndex == actualIndex)
+                                        ? String.format(" at index %d", expectedIndex)
+                                        : String.format(" at index %d (expected index %d)", actualIndex, expectedIndex));
                         itemFailures.add(new MultipleFailuresError(heading, fieldFailures));
                     }
                 }

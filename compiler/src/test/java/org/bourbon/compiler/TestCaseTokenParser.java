@@ -8,6 +8,7 @@ import static org.bourbon.compiler.TokenType.AMPERSAND_EQUAL;
 import static org.bourbon.compiler.TokenType.BACKTICK;
 import static org.bourbon.compiler.TokenType.BANG;
 import static org.bourbon.compiler.TokenType.BANG_EQUAL;
+import static org.bourbon.compiler.TokenType.BANG_EQUAL_EQUAL;
 import static org.bourbon.compiler.TokenType.CARET;
 import static org.bourbon.compiler.TokenType.COLON;
 import static org.bourbon.compiler.TokenType.COMMA;
@@ -94,6 +95,7 @@ public class TestCaseTokenParser {
             entry(STAR_EQUAL, "*="),
             entry(BANG, "!"),
             entry(BANG_EQUAL, "!="),
+            entry(BANG_EQUAL_EQUAL, "!=="),
             entry(TILDE, "~"),
             entry(TILDE_EQUAL, "~="),
             entry(PIPE, "|"),

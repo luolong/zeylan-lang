@@ -1,17 +1,117 @@
-==================
-Bourbon Operators
-==================
-( { , . - + ; * } )
+========================
+Operators and delimiters
+========================
+// Braces and parentheses (0–5)
+( { [ ] } )
+
+// Arithmetic and assignment (6–19)
++ - * / % ^
+++ -- **
++= -= /= *= %=
+=
+
+// Equality and Comparison (20–28)
+== ===
+!= !==
+< > <= >=
+<=>
+
+// Logical Operators (29–33)
+! && ||
+&&= ||=
+
+// Binary and set operators (34–39)
+~ & |
+~= &= |=
+
+// Miscellaneous
+, ;
+`
+?
+. ?. *.
+=> ->
+... .. :
+
 ---
-LEFT_PAREN   @ 1
-LEFT_BRACE   @ 3
-COMMA        @ 5
-DOT          @ 7
-MINUS        @ 9
-PLUS         @11
-SEMICOLON    @13
-STAR         @15
-RIGHT_BRACE  @17
-RIGHT_PAREN  @19
 ---
-EOF @ 1
+LEFT_PAREN    @ 1
+LEFT_BRACE    @ 3
+LEFT_BRACKET  @ 5
+RIGHT_BRACKET @ 7
+RIGHT_BRACE   @ 9
+RIGHT_PAREN   @11
+---
+---
+---
+PLUS       @ 1
+MINUS      @ 3
+STAR       @ 5
+SLASH      @ 7
+PERCENT    @ 9
+CARET      @11
+---
+PLUS_PLUS   @ 1
+MINUS_MINUS @ 4
+STAR_STAR   @ 7
+---
+PLUS_EQUAL    @ 1
+MINUS_EQUAL   @ 4
+SLASH_EQUAL   @ 7
+STAR_EQUAL    @10
+PERCENT_EQUAL @13
+---
+EQUAL         @ 1
+---
+---
+---
+EQUAL_EQUAL  @ 1
+TRIPLE_EQUAL @ 4
+---
+BANG_EQUAL       @ 1
+BANG_EQUAL_EQUAL @ 4
+---
+LESS          @ 1
+GREATER       @ 3
+LESS_EQUAL    @ 5
+GREATER_EQUAL @ 8
+---
+LESS_EQUAL_GREATER @ 1
+---
+---
+---
+BANG                @ 1
+AMPERSAND_AMPERSAND @ 3
+PIPE_PIPE           @ 6
+---
+AMPERSAND_AMPERSAND_EQUAL @ 1
+PIPE_PIPE_EQUAL           @ 5
+---
+---
+---
+TILDE     @ 1
+AMPERSAND @ 3
+PIPE      @ 5
+---
+TILDE_EQUAL     @ 1
+AMPERSAND_EQUAL @ 4
+PIPE_EQUAL      @ 7
+---
+---
+---
+COMMA @ 1
+SEMICOLON @ 3
+---
+BACKTICK @ 1
+---
+QUESTION @ 1
+---
+DOT @ 1
+QUESTION_DOT @ 3
+STAR_DOT     @ 6
+---
+FAT_ARROW  @ 1
+THIN_ARROW @ 4
+---
+TRIPLE_DOT @ 1
+DOT_DOT    @ 5
+COLON      @ 8

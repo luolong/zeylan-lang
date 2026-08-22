@@ -11,5 +11,3 @@ LEFT_PAREN @1
     |   ^ Unexpected symbol
     |
 RIGHT_PAREN @5
----
-EOF @1

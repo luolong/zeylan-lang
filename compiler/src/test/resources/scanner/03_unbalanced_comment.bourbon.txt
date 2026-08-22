@@ -11,5 +11,3 @@ Unbalanced Multiline Comment
   2 | 
     | ^ Still no end of comment
     |
----
-EOF @ 1

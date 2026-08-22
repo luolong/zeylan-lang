@@ -66,12 +66,20 @@ public class Source implements CharSequence {
         return current;
     }
 
+    int currentLine() {
+        return currentLine;
+    }
+
     private int lineOffset(int line) {
         return lineOffsets.get(line - 1);
     }
 
     private int lineOffsetAt(int offset) {
         return lineOffset(lineNumberAt(offset));
+    }
+
+    public List<Integer> lineOffsets() {
+        return Collections.unmodifiableList(lineOffsets);
     }
 
     private int lineNumberAt(int offset) {

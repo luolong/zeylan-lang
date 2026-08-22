@@ -20,11 +20,36 @@ public record Token(
             case String s -> "\"" + escape(s) + "\"";
             default -> literal.toString();
         };
-        return "Token[type=" + type + ", lexeme=" + escape(lexeme) + ", literal=" + literalString + ", line=" + line + ", column=" + column + ", startOffset=" + startOffset + ", length=" + length + "]";
+        var position = line + ":" + column;
+        var range = "[" + startOffset+ ".." + end() + "]";
+        return String.join(" ", type.name(), escape(lexeme), literalString, "@", position, range);
+    }
+
+    public int end() {
+        return startOffset + length;
     }
 
     private static String escape(String s) {
-        return s.chars().mapToObj(c -> (char) c).map(c -> switch (c) {
+        if (s.isEmpty()) return "";
+
+        if (s.length() > 1) {
+            if (s.contains("\""))
+                return s.chars().mapToObj(c -> (char) c)
+                        .map(c -> c == '"' ? String.valueOf(c) : escape(c))
+                        .collect(joining("", "'", "'"));
+
+            if (s.contains("'") || s.contains(" "))
+                return s.chars().mapToObj(c -> (char) c)
+                        .map(c -> c == '\'' ? String.valueOf(c) : escape(c))
+                        .collect(joining("", "\"", "\""));
+
+            return s.chars().mapToObj(c -> (char) c).map(Token::escape).collect(joining());
+        }
+        return escape(s.charAt(0));
+    }
+
+    private static String escape(char c) {
+        return switch (c) {
             case '\n' -> "\\n";
             case '\r' -> "\\r";
             case '\t' -> "\\t";
@@ -33,7 +58,7 @@ public record Token(
             case '\\' -> "\\\\";
             case '"' -> "\\\"";
             default -> String.valueOf(c);
-        }).collect(joining());
+        };
     }
 
 }
